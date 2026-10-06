@@ -1,0 +1,105 @@
+{
+  "version": "0.1.0-dev.2",
+  "sourceCommit": "d58a1a2ad3132515891a2452596ab571af4b55ba",
+  "node": "v24.19.0",
+  "sourceHashes": [
+    {
+      "path": ".gitignore",
+      "sha256": "51f1977cb4ab14529d1e1723c11e05c11e63c368926b8901c89812382fba9008"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "821843c2ef42a4f0b8c298df8f9b529797776019e36d2a8b5d84eea4a9a69670"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0f5da834b477b4b4089ac0acdb5b8db172dd13d040b8f1ece78bc759f897eabc"
+    },
+    {
+      "path": "SOURCE-ORIGIN.json",
+      "sha256": "62c38b828d92b6704f7433f44126708ec915023d95b70fe99e97c5e38075f1f8"
+    },
+    {
+      "path": "build.mjs",
+      "sha256": "6c4ade1e9e8d6df787f5ffd81f53bf6033c759ca6efa31d47ee34d5488448531"
+    },
+    {
+      "path": "npm-shrinkwrap.json",
+      "sha256": "ecb37427f370c96c8ce1350d47d45e4482948f99174091d0d59dc25e394b0cbd"
+    },
+    {
+      "path": "package.json",
+      "sha256": "6287c0fb1a80a46516accdfe1948eecae9840c075dc739d9befd769edf71b590"
+    },
+    {
+      "path": "scripts/pack.mjs",
+      "sha256": "4acea39a16b814ab12fa59983e028a80cdd6cb5f128f308a8cdc184b0a78910b"
+    },
+    {
+      "path": "scripts/update-dependency.mjs",
+      "sha256": "c398519a64ccd3770af24bfdd353364e9bde5a477ae3d5ed2a54f66e279c15d6"
+    },
+    {
+      "path": "src/chess-analysis/analyze.ts",
+      "sha256": "4a9a5e245d1586bd300b7968ab62b9525a34c778d719b5d07c76d51048e97f4d"
+    },
+    {
+      "path": "src/chess-analysis/contracts.ts",
+      "sha256": "77201129db8266ffafe30326f091ff8520712b1d3d4c26824c01d27bc66bdbdc"
+    },
+    {
+      "path": "src/chess-analysis/knights-eye-policy-runtime.d.ts",
+      "sha256": "50ccd1069f2a423a1266da0e999c44300d466088038a47e139f3ef18fdfcb74b"
+    },
+    {
+      "path": "src/chess-analysis/knights-eye-policy-runtime.js",
+      "sha256": "71afb5d9218ccf2f284a8b5480d8281292c786a5e36916c2c6be09be5b38c505"
+    },
+    {
+      "path": "src/chess-analysis/knights-eye-policy.ts",
+      "sha256": "e6745a039ad629af139ee3b110a7f79173e8f422970bb6ddc01af70baca21baa"
+    },
+    {
+      "path": "src/chess-analysis/recorded-decision.ts",
+      "sha256": "3014ef929dd5c3634d1656718480da0946ae007cdfb17632557a89771efb2681"
+    },
+    {
+      "path": "src/chess-analysis/stockfish-adapter.ts",
+      "sha256": "e7f951047630f2bc6c67be6f877dcde3b566d4675878999833bbc221a376b4f8"
+    },
+    {
+      "path": "test/analysis-phase2.test.mjs",
+      "sha256": "3ec5a369c678871b625c96af2e08e152e448cf4cfdf4a8047245f6b8be4d456c"
+    },
+    {
+      "path": "test/recorded-decision.test.mjs",
+      "sha256": "3a4c8867e9a7e836f0e4c3652bb28be4820e8af5a827b760ecdb68e43a9c3518"
+    },
+    {
+      "path": "test/stockfish-admission.test.mjs",
+      "sha256": "d1cf0434562d2f01b7643c2228c8c146b1d20848d6474953889e0be833d25b9c"
+    },
+    {
+      "path": "tests/core.test.mjs",
+      "sha256": "7b032cb7f75abcd6e39a4dd5d386e01c011f5881491e1811630434cbcb42c2c1"
+    },
+    {
+      "path": "tests/types.ts.txt",
+      "sha256": "0349ef74ce235ff7afb36347f8ccaa7763d989302dabf6206ed779d62278a21c"
+    }
+  ],
+  "standaloneNpmCi": true,
+  "standaloneBuild": true,
+  "standaloneTests": 37,
+  "packedConsumerNpmCi": true,
+  "packedConsumerTests": 37,
+  "typeConsumer": "not additionally run",
+  "limits": "Offline fixtures and process mocks; no real engine corpus, live model/provider, website deployment or physical-device qualification",
+  "postQualificationDocumentation": {
+    "changedFiles": [
+      "README.md"
+    ],
+    "verification": "Only repository README wording changed after passing source/packed runtime checks. Runtime, build scripts, tests and accepted dev.2 archive bytes unchanged.",
+    "artifactDocumentation": "Initial immutable dev.2 archive README retains earlier terminology; current repository README is corrected. Any future changed artifact requires a new version."
+  }
+}
