@@ -1,0 +1,54 @@
+import { createChessAnalyzerCore, type AnalysisEngine, type AnalysisPolicy } from '@knights-eye-chess/move-classifier/core';
+import { type SearchRequest, type PositionAnalysis } from '@knights-eye-chess/move-classifier/engine/stockfish';
+import { Chess } from 'chess.js';
+const engine: AnalysisEngine = { search: async (_request: SearchRequest): Promise<PositionAnalysis> => { throw new Error('type-only consumer'); } };
+declare const policy: AnalysisPolicy;
+const analyzer = createChessAnalyzerCore(Chess, engine, policy);
+void analyzer.analyzeAndClassify({ startFen: new Chess().fen(), history: ['e2e4'], depth: 18 });
+// @ts-expect-error An exact history cannot be replaced by just a position.
+void analyzer.analyzeAndClassify({ startFen: new Chess().fen(), depth: 18 });
+import { recordDecision, readRecordedDecision, type RecordedDecision, type PolicyIdentity } from '@knights-eye-chess/move-classifier/contracts';
+const identity: PolicyIdentity = { id: 'example/policy', revision: 1 };
+declare const raw: unknown;
+const snapshot: RecordedDecision = recordDecision(raw);
+// @ts-expect-error Stored occurrence history is immutable.
+snapshot.occurrence.history.push('e2e4');
+const restored = readRecordedDecision(snapshot, identity);
+const evidence: false = restored.reusableAsEngineEvidence;
+void evidence;
+// @ts-expect-error A numeric classifier revision alone is not a policy identity.
+const ambiguous: PolicyIdentity = { revision: 40 };
+void ambiguous;
+import { createKnightsEyePolicy, type KnightsEyeDecision } from '@knights-eye-chess/move-classifier/policy/knights-eye';
+const ke = createChessAnalyzerCore(Chess, undefined, createKnightsEyePolicy(Chess));
+const outcome = await ke.classifySuppliedEvidence({ startFen: new Chess().fen(), history: ['e2e4'], depth: 18, evidence: [] });
+if (outcome.status === 'complete') {
+  const decision: KnightsEyeDecision = outcome.decision;
+  const loss: number = decision.qualityLoss;
+  void loss;
+} else {
+  const reason: string = outcome.reason;
+  void reason;
+  // @ts-expect-error Unavailable outcomes cannot be treated as classifications.
+  void outcome.decision;
+}
+// @ts-expect-error Policies must return typed classification decisions.
+const invalidPolicy: AnalysisPolicy = { ...policy, classify: () => ({ madeUp: true }) };
+void invalidPolicy;
+
+import type { KnightsEyeLabel } from '@knights-eye-chess/move-classifier/policy/knights-eye';
+const ordinaryLabels: KnightsEyeLabel[] = ['okay', 'dubious'];
+void ordinaryLabels;
+// @ts-expect-error Knight’s Eye v40 does not emit this foreign label.
+const foreignLabel: KnightsEyeLabel = 'excellent';
+void foreignLabel;
+
+const preparedPolicy = createKnightsEyePolicy(Chess, 'consumer-engine', {
+  historyContext: { priorOwnBeforeFenForPosition: () => '', treePreviousMoveForFen: () => null },
+  preparedCaches: { materialExposure: () => ({}), sacrificeVerification: () => ({}) },
+});
+const preparedScore: number = preparedPolicy.prepared.numericScore({ scoreCp: 20, mate: null });
+void preparedScore;
+// @ts-expect-error A prepared scalar is not an admitted complete analysis outcome.
+const completedPrepared: { status: 'complete' } = preparedScore;
+void completedPrepared;

@@ -1,0 +1,56 @@
+{
+  "name": "@knights-eye-chess/move-classifier",
+  "version": "0.1.0-dev.2",
+  "private": true,
+  "type": "module",
+  "description": "Private reusable classification preview with native Knight’s Eye policy and optional engine acquisition",
+  "files": [
+    "dist",
+    "src",
+    "test",
+    "tests",
+    "build.mjs",
+    "npm-shrinkwrap.json",
+    "README.md",
+    "vendor",
+    "SOURCE-ORIGIN.json",
+    "scripts"
+  ],
+  "exports": {
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    "./engine/stockfish": {
+      "types": "./dist/stockfish.d.ts",
+      "import": "./dist/stockfish.js"
+    },
+    "./contracts": {
+      "types": "./dist/recorded-decision.d.ts",
+      "import": "./dist/recorded-decision.js"
+    },
+    "./policy/knights-eye": {
+      "types": "./dist/policy.d.ts",
+      "import": "./dist/policy.js"
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/*.test.mjs dist/*.test.mjs",
+    "check": "npm run build && npm test",
+    "pack:checked": "npm run check && node scripts/pack.mjs",
+    "pack:artifact": "node scripts/pack.mjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "devDependencies": {
+    "chess.js": "1.4.0",
+    "esbuild": "0.28.0",
+    "typescript": "5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knights-eye-chess/move-classifier.git"
+  }
+}
