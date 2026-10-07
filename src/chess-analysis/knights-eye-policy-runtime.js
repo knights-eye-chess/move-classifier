@@ -159,6 +159,13 @@ export function createKnightsEyePolicyRuntime(Chess, engineKind = 'stockfish', h
     // These operations consume host-prepared context. They do not admit engine
     // evidence or claim a complete acquired/supplied analysis outcome.
     prepared: {
+      // A consistency operation over recorded inputs, not an evidence admission.
+      // Reuse the native label selector and its current mate-policy defaults.
+      classifyRecordedSignals: function(signal) {
+        return classifyFromSignals(Object.assign({}, signal, {
+          winningLine: winningOutcomeLine(), notBadLine: notBadOutcomeLine(),
+        }));
+      },
       numericScore, expectedPoints, notBadOutcomeLine, pieceValue, legalMoves,
       terminalPositionResult, materialExchangeForMove, canLegallyCapture,
       sacrificeCaptureCandidates, sacrificeVerificationKey, evaluateSacrificeLines,

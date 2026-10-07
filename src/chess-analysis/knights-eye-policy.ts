@@ -95,7 +95,16 @@ export type KnightsEyePreparedCaches = {
 };
 export type KnightsEyePolicyOptions = { historyContext?: KnightsEyeHistoryContext; preparedCaches?: KnightsEyePreparedCaches };
 export type SacrificeLineEvaluation = { verification: SacrificeVerification | null; qualifying: boolean; covered: boolean; verifications: SacrificeVerification[] };
+/** Recorded policy inputs only. Recomputing a label from these caller-owned
+ * signals checks consistency; it does not verify their chess/evidence truth. */
+export type RecordedClassificationSignals = Pick<KnightsEyeDecision,
+  'forced' | 'mateMove' | 'greatMove' | 'sacrifice' | 'interestingMove' | 'playedBest'
+  | 'missedOpportunity' | 'missedSpecial' | 'missedMaterialOpportunity' | 'newlyAllowsMate'
+  | 'missedImmediateMate' | 'abandonedForcedMate' | 'qualityLoss' | 'afterEp'> & {
+  book: boolean; outcomeEpLoss: number; mateLossClassification: KnightsEyeDecision['mateLossClassification'] | null;
+};
 export type KnightsEyePreparedOperations = {
+  classifyRecordedSignals(signals: RecordedClassificationSignals): KnightsEyeLabel;
   numericScore(position?: Pick<PreparedPosition, 'scoreCp' | 'mate'> | null): number;
   expectedPoints(cp: number): number;
   notBadOutcomeLine(): number;
