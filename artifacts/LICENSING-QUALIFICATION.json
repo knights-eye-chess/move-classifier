@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-08",
+  "issue": "https://github.com/knights-eye-chess/knightseye-net/issues/17",
+  "checks": {
+    "package": "@knights-eye-chess/move-classifier",
+    "version": "0.1.0-dev.4",
+    "codeLicense": "MIT",
+    "unchangedRuntimeAndArtworkFiles": 23,
+    "archiveSha256": "dd75931aa227ee7f284a21de9ba6a2146b50046bede653f7798866823fc1c8ec",
+    "licenseAndNoticeFilesPresent": true
+  },
+  "previousArtifact": "knights-eye-chess-move-classifier-0.1.0-dev.3.tgz",
+  "sourceCheck": "npm ci and npm run pack:checked; see issue summary for installed artifact qualification",
+  "publication": "not performed",
+  "installedConsumerTests": {
+    "name": "@knights-eye-chess/move-classifier",
+    "version": "0.1.0-dev.4",
+    "files": 5,
+    "passed": 39,
+    "failed": 0
+  },
+  "consumerTestHarness": "Independent npm install of six exact archives with TypeScript 5.9.3, esbuild 0.28.0 and Playwright 1.62.1; no package symlinks."
+}

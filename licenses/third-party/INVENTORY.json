@@ -1,0 +1,10 @@
+{
+  "generated": "2026-10-08",
+  "scope": "Installed production dependency graph; first-party component archives excluded.",
+  "limits": [
+    "Metadata and copied notices are upstream statements, not a grant of rights by Knight\u2019s Eye.",
+    "Optional platform dependencies vary. Build/dev dependencies are not in this production inventory.",
+    "Original files embedded in assets/vendor archives retain their own terms."
+  ],
+  "packages": []
+}

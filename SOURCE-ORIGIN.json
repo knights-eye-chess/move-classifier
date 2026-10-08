@@ -4,5 +4,10 @@
   "sourcePath": "packages/analysis-core",
   "version": "0.1.0-dev.3",
   "previousArtifactVersion": "0.1.0-dev.2",
-  "ownership": "No license or public release decision made"
+  "ownership": "Owner-approved first-party code license: MIT; see LICENSING.md. Public release remains a separate decision.",
+  "licenseDecision": {
+    "date": "2026-10-08",
+    "code": "MIT",
+    "artwork": "not included"
+  }
 }

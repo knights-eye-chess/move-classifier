@@ -1,8 +1,10 @@
 # Private reusable classification preview
 
+First-party code: **MIT**. See [LICENSING.md](LICENSING.md) for scope and third-party terms.
+
 Version `0.1.0-dev.2` is an unpublished preview. It includes the complete native
 Knight's Eye policy-40 computation, injected analysis orchestration and a UCI
-transport adapter. No registry publication or license grant is implied.
+transport adapter. The approved MIT license applies; no registry publication has been performed.
 
 ## Named entry points
 

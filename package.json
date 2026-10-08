@@ -1,6 +1,6 @@
 {
   "name": "@knights-eye-chess/move-classifier",
-  "version": "0.1.0-dev.3",
+  "version": "0.1.0-dev.4",
   "private": true,
   "type": "module",
   "description": "Private reusable classification preview with native Knight\u2019s Eye policy and optional engine acquisition",
@@ -14,7 +14,12 @@
     "README.md",
     "vendor",
     "SOURCE-ORIGIN.json",
-    "scripts"
+    "scripts",
+    "LICENSE",
+    "NOTICE",
+    "LICENSING.md",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses"
   ],
   "exports": {
     "./core": {
@@ -52,5 +57,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/knights-eye-chess/move-classifier.git"
-  }
+  },
+  "license": "MIT"
 }
