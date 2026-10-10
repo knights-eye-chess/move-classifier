@@ -1,12 +1,12 @@
 {
   "name": "@knights-eye-chess/move-classifier",
-  "version": "0.1.0-dev.9",
+  "version": "0.1.0-dev.10",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@knights-eye-chess/move-classifier",
-      "version": "0.1.0-dev.9",
+      "version": "0.1.0-dev.10",
       "license": "MIT",
       "devDependencies": {
         "chess.js": "1.4.0",
