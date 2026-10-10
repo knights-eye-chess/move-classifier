@@ -30,7 +30,7 @@ npm run pack:checked
 Install the archive in your app, along with the chess library used in this example:
 
 ```sh
-npm install /absolute/path/to/move-classifier/artifacts/knights-eye-chess-move-classifier-0.1.0-dev.5.tgz chess.js@1.4.0
+npm install /absolute/path/to/move-classifier/artifacts/knights-eye-chess-move-classifier-0.1.0-dev.6.tgz chess.js@1.4.0
 ```
 
 This first example deliberately supplies no engine evidence. It shows how to

@@ -2,29 +2,67 @@
   "schema": "knights-eye-npm-preparation/1",
   "candidate": {
     "name": "@knights-eye-chess/move-classifier",
-    "version": "0.1.0-dev.5",
-    "archive": "artifacts/knights-eye-chess-move-classifier-0.1.0-dev.5.tgz",
-    "bytes": 65743,
-    "sha256": "69df79ed18ed48a42f73ba47a9a7f3b7d9afe33b444a81446831fa2f549f4b13",
+    "version": "0.1.0-dev.6",
+    "archive": "artifacts/knights-eye-chess-move-classifier-0.1.0-dev.6.tgz",
+    "bytes": 65772,
+    "sha256": "2904117fbf4ae57ede82694e6976d2ea17a340c2651df7314308e5d320ffa671",
     "dependencies": {},
     "privateSource": true,
     "privateTarball": false
   },
   "checks": {
-    "sourceAndInstalledTests": 129,
+    "metadataOnlyChangesVerified": true,
+    "nonmetadataArchiveEntriesByteIdentical": true,
+    "npmPublishDryRun": true,
+    "sourceAndInstalledTests": "not run for this candidate",
     "publicEsmImports": 19,
     "cliHelpCommands": 2,
     "strictNodeNextTypes": true,
-    "browserConsumer": "Chromium: board mount, tree PGN import, supplied-evidence classifier",
-    "npmPublishDryRun": true,
+    "browserConsumer": "not run for this candidate",
     "combinedSixArchiveInstall": true,
-    "historicalArchivesUnchanged": 62,
-    "immutableCollisionRejected": true
+    "historicalArchivesUnchanged": 54
   },
   "registryPublicationPerformed": false,
   "visibilityChanged": false,
   "limitations": [
     "No live model quality or engine performance claim",
     "Owner npm account/scope authority and publication authorization required"
-  ]
+  ],
+  "priorCandidateEvidence": {
+    "candidate": {
+      "name": "@knights-eye-chess/move-classifier",
+      "version": "0.1.0-dev.5",
+      "archive": "artifacts/knights-eye-chess-move-classifier-0.1.0-dev.5.tgz",
+      "bytes": 65743,
+      "sha256": "69df79ed18ed48a42f73ba47a9a7f3b7d9afe33b444a81446831fa2f549f4b13",
+      "dependencies": {},
+      "privateSource": true,
+      "privateTarball": false
+    },
+    "checks": {
+      "sourceAndInstalledTests": 129,
+      "publicEsmImports": 19,
+      "cliHelpCommands": 2,
+      "strictNodeNextTypes": true,
+      "browserConsumer": "Chromium: board mount, tree PGN import, supplied-evidence classifier",
+      "npmPublishDryRun": true,
+      "combinedSixArchiveInstall": true,
+      "historicalArchivesUnchanged": 62,
+      "immutableCollisionRejected": true
+    },
+    "note": "These checks were run on the prior candidate. All nonmetadata archive entries in the prior and current candidate are byte-identical; the current candidate does not claim those checks were rerun."
+  },
+  "metadataComparison": {
+    "repository": "move-classifier",
+    "priorVersion": "0.1.0-dev.5",
+    "newVersion": "0.1.0-dev.6",
+    "changedArchiveEntries": [
+      "package/package.json",
+      "package/SOURCE-ORIGIN.json",
+      "package/NPM-PUBLISHING.md",
+      "package/README.md"
+    ],
+    "unchangedEntries": 40,
+    "sourceRuntimeTypesAssetsByteIdentical": true
+  }
 }
