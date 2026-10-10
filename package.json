@@ -1,6 +1,6 @@
 {
   "name": "@knights-eye-chess/move-classifier",
-  "version": "0.1.0-dev.8",
+  "version": "0.1.0-dev.9",
   "private": true,
   "type": "module",
   "description": "Private reusable classification preview with native Knight\u2019s Eye policy and optional engine acquisition",
