@@ -19,19 +19,17 @@ For a ready-made PGN command, see [PGN Annotator](https://github.com/knights-eye
 
 ## Get started
 
-Use Node 24 or newer. This preview has not been published to npm. From a checkout
-of [this repository](https://github.com/knights-eye-chess/move-classifier):
+Use Node 24 or newer. Install the public prerelease with the chess library used
+in this example:
 
 ```sh
-npm ci
-npm run pack:checked
+npm install @knights-eye-chess/move-classifier@next chess.js@1.4.0
 ```
 
-Install the archive in your app, along with the chess library used in this example:
-
-```sh
-npm install /absolute/path/to/move-classifier/artifacts/knights-eye-chess-move-classifier-0.1.0-dev.7.tgz chess.js@1.4.0
-```
+The `next` tag currently resolves to `0.1.0-dev.10`; pin that exact version for a
+reproducible install. The policy and API remain preview contracts. For source
+development, use the commands below; [SOURCE-ORIGIN.json](SOURCE-ORIGIN.json)
+records historical archive provenance.
 
 This first example deliberately supplies no engine evidence. It shows how to
 handle a missing search without presenting a move label:
