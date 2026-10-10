@@ -30,7 +30,7 @@ npm run pack:checked
 Install the archive in your app, along with the chess library used in this example:
 
 ```sh
-npm install /absolute/path/to/move-classifier/artifacts/knights-eye-chess-move-classifier-0.1.0-dev.6.tgz chess.js@1.4.0
+npm install /absolute/path/to/move-classifier/artifacts/knights-eye-chess-move-classifier-0.1.0-dev.7.tgz chess.js@1.4.0
 ```
 
 This first example deliberately supplies no engine evidence. It shows how to
@@ -78,7 +78,9 @@ can identify book moves; without it no Book assertion is made.
 | `@knights-eye-chess/move-classifier/core` | Replay-based core, supplied-evidence classification and low-level analysis service. |
 | `@knights-eye-chess/move-classifier/policy/knights-eye` | Native Knight's Eye policy and its types. |
 | `@knights-eye-chess/move-classifier/engine/stockfish` | UCI adapter for a host-supplied transport. |
-| `@knights-eye-chess/move-classifier/contracts` | Result/evidence types and recorded-decision codec. |
+| `@knights-eye-chess/move-classifier/contracts` | Result/evidence types, policy revision and recorded-decision codecs. |
+
+`@knights-eye-chess/move-classifier/compatibility` exposes the preserved policy-40 runtime factory and source strings for host compatibility generation. Hosts should use the typed policy factory for new integrations.
 
 There is no root import and no bundled engine binary, process host or browser Worker.
 See [evidence and recording contracts](docs/API.md), [core source](src/chess-analysis/analyze.ts),

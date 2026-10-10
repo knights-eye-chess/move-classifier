@@ -52,3 +52,14 @@ void preparedScore;
 // @ts-expect-error A prepared scalar is not an admitted complete analysis outcome.
 const completedPrepared: { status: 'complete' } = preparedScore;
 void completedPrepared;
+
+import { CLASSIFIER_VERSION, scopedClassifierDecision, type ClassifierDecisionContext } from '@knights-eye-chess/move-classifier/contracts';
+const scope: ClassifierDecisionContext & { hostId: string } = { moveUci: 'e2e4', fenBefore: 'before', fenAfter: 'after', hostId: 'host' };
+const scoped: Record<string, unknown> | null = scopedClassifierDecision(raw, scope, 'best', CLASSIFIER_VERSION);
+void scoped;
+// @ts-expect-error Scoping requires both exact positions and the move.
+scopedClassifierDecision(raw, { moveUci: 'e2e4' }, 'best', CLASSIFIER_VERSION);
+import { POSITION_RULES_SOURCE, createKnightsEyePolicyRuntime } from '@knights-eye-chess/move-classifier/compatibility';
+const compatibilitySource: string = POSITION_RULES_SOURCE;
+void compatibilitySource;
+void createKnightsEyePolicyRuntime(Chess);

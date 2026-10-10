@@ -1,9 +1,9 @@
 {
   "name": "@knights-eye-chess/move-classifier",
-  "version": "0.1.0-dev.6",
+  "version": "0.1.0-dev.8",
   "private": true,
   "type": "module",
-  "description": "Private reusable classification preview with native Knight’s Eye policy and optional engine acquisition",
+  "description": "Private reusable classification preview with native Knight\u2019s Eye policy and optional engine acquisition",
   "files": [
     "dist",
     "src",
@@ -38,6 +38,10 @@
     "./policy/knights-eye": {
       "types": "./dist/policy.d.ts",
       "import": "./dist/policy.js"
+    },
+    "./compatibility": {
+      "types": "./dist/compatibility.d.ts",
+      "import": "./dist/compatibility.js"
     }
   },
   "scripts": {

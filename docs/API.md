@@ -60,3 +60,21 @@ origins match current app presentation; review that bound before public release.
 
 
 The [core source](../src/chess-analysis/analyze.ts), [policy source](../src/chess-analysis/knights-eye-policy.ts) and [tests](../tests) document the executable contracts.
+
+## Scoped classifier telemetry
+
+The contracts entry also exports `CLASSIFIER_VERSION`, `hasCurrentClassifierVersion`,
+`scopedClassifierDecision`, `ClassifierDecisionContext` and `CLASSIFIER_DECISION_SOURCE`.
+The context is the structural `{ moveUci, fenBefore, fenAfter }` snapshot, so callers
+may supply a richer context without depending on an AI or application package.
+`scopedClassifierDecision(value, context, classification, classifierVersion)` returns
+a detached telemetry record only when its exact snapshot, current policy revision,
+label, signal shape and Great qualification agree; otherwise it returns `null`.
+This retains the existing `version: 'classifier-decision/1'` telemetry wire shape,
+which is separate from the `schema: 'classifier-decision/1'` display codec above.
+Neither format grants engine evidence or chess-proof authority.
+
+The compatibility entry exports `POSITION_RULES_SOURCE`, `CLASSIFIER_RULES_SOURCE`
+and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
+`createKnightsEyePolicyRuntime`. Applications generate historical widget strings
+from these installed exports; application source is never a fallback policy owner.
