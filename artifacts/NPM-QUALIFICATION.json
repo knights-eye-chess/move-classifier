@@ -1,0 +1,30 @@
+{
+  "schema": "knights-eye-npm-preparation/1",
+  "candidate": {
+    "name": "@knights-eye-chess/move-classifier",
+    "version": "0.1.0-dev.5",
+    "archive": "artifacts/knights-eye-chess-move-classifier-0.1.0-dev.5.tgz",
+    "bytes": 65743,
+    "sha256": "69df79ed18ed48a42f73ba47a9a7f3b7d9afe33b444a81446831fa2f549f4b13",
+    "dependencies": {},
+    "privateSource": true,
+    "privateTarball": false
+  },
+  "checks": {
+    "sourceAndInstalledTests": 129,
+    "publicEsmImports": 19,
+    "cliHelpCommands": 2,
+    "strictNodeNextTypes": true,
+    "browserConsumer": "Chromium: board mount, tree PGN import, supplied-evidence classifier",
+    "npmPublishDryRun": true,
+    "combinedSixArchiveInstall": true,
+    "historicalArchivesUnchanged": 62,
+    "immutableCollisionRejected": true
+  },
+  "registryPublicationPerformed": false,
+  "visibilityChanged": false,
+  "limitations": [
+    "No live model quality or engine performance claim",
+    "Owner npm account/scope authority and publication authorization required"
+  ]
+}

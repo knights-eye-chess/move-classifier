@@ -1,25 +1,26 @@
 {
   "name": "@knights-eye-chess/move-classifier",
-  "version": "0.1.0-dev.4",
+  "version": "0.1.0-dev.5",
   "private": true,
   "type": "module",
-  "description": "Private reusable classification preview with native Knight\u2019s Eye policy and optional engine acquisition",
+  "description": "Private reusable classification preview with native Knight’s Eye policy and optional engine acquisition",
   "files": [
     "dist",
     "src",
     "test",
     "tests",
     "build.mjs",
-    "npm-shrinkwrap.json",
     "README.md",
-    "vendor",
     "SOURCE-ORIGIN.json",
     "scripts",
     "LICENSE",
     "NOTICE",
     "LICENSING.md",
     "THIRD_PARTY_NOTICES.md",
-    "licenses"
+    "licenses",
+    "NPM-PUBLISHING.md",
+    "npm-release.json",
+    "docs"
   ],
   "exports": {
     "./core": {
@@ -44,7 +45,9 @@
     "test": "node --test tests/*.test.mjs dist/*.test.mjs",
     "check": "npm run build && npm test",
     "pack:checked": "npm run check && node scripts/pack.mjs",
-    "pack:artifact": "node scripts/pack.mjs"
+    "pack:artifact": "node scripts/pack.mjs",
+    "publish:verify": "node scripts/verify-release.mjs",
+    "publish:prepare": "npm run pack:checked && npm run publish:verify"
   },
   "engines": {
     "node": ">=24.0.0"
