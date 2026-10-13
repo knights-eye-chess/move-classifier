@@ -19,6 +19,8 @@ export type AnalysisContext<X = null, V = never> = {
 };
 export type ClassificationComparisonRequest = Readonly<{ fen: string; depth: number; multiPv: number; rootMoves: string[] }>;
 export type VerificationState<V, C extends CandidateMove> = { candidates: C[]; verification: V | null };
+export type ContinuationScope = Readonly<{ fen: string; depth: number; rootMoves: string[]; acceptanceUci: string }>;
+export type ContinuationEvidence = Readonly<{ request: ContinuationScope; analysis: PositionAnalysis }>;
 export type AnalysisLogic<D extends ClassificationDecision = ClassificationDecision, X = null, V = never, C extends CandidateMove = CandidateMove> = {
   readonly identity: PolicyIdentity;
   /** Optional request-local policy instance for policies with evidence caches. */
@@ -29,6 +31,9 @@ export type AnalysisLogic<D extends ClassificationDecision = ClassificationDecis
   exchange(context: AnalysisContext<X, V>): { inherited: boolean; originFen: string };
   offer(context: AnalysisContext<X, V>, after: LivePosition<V>, baseline: string): VerificationState<V, C>;
   verify(context: AnalysisContext<X, V>, state: VerificationState<V, C>, lines: EngineLine[]): V | null;
+  /** Optional second-stage, exact-root verification of a board-established continuation. */
+  continuationRequests?(context: AnalysisContext<X, V>, state: VerificationState<V, C>, verification: V): ContinuationScope[];
+  verifyContinuations?(context: AnalysisContext<X, V>, state: VerificationState<V, C>, verification: V, evidence: readonly ContinuationEvidence[]): V | null;
   verificationSatisfies(verification: V, depth: number): boolean;
   classificationComparison?(context: AnalysisContext<X, V>): ClassificationComparisonRequest | null;
   admitClassificationComparison?(context: AnalysisContext<X, V>, request: ClassificationComparisonRequest, result: PositionAnalysis): PositionAnalysis | null;

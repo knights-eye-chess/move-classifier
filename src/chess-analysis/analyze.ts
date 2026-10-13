@@ -64,9 +64,9 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
         if (supplied.has(evidenceKey)) fail('invalid-request', 'Duplicate supplied evidence scope.');
         supplied.set(evidenceKey, item.analysis);
       }
-      async function position(fen: string, roots?: string[]): Promise<LivePosition<V>> {
+      async function position(fen: string, roots?: string[], requiredDepth?: number): Promise<LivePosition<V>> {
         check(request.signal);
-        const depth = roots ? settings.verificationDepth : request.depth;
+        const depth = roots ? (requiredDepth ?? settings.verificationDepth) : request.depth;
         const terminal = activeLogic.terminal(fen, depth);
         if (terminal && !roots) return { ...terminal, candidates: [], pv: [] } as LivePosition<V>;
         const legal = activeLogic.legalCount(fen);
@@ -150,6 +150,24 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
         const verified = await position(context.afterFen, roots);
         check(request.signal); verification = activeLogic.verify(context, offer, verified.candidates);
         if (!verification || !activeLogic.verificationSatisfies(verification, settings.verificationDepth)) fail('verification-unavailable', 'Policy could not verify the requested continuations.');
+      }
+      if (verification && activeLogic.continuationRequests && activeLogic.verifyContinuations) {
+        const scopes = activeLogic.continuationRequests(context, offer, verification);
+        const evidence = [];
+        for (const scope of scopes) {
+          if (!scope || typeof scope.fen !== 'string' || !scope.fen.trim() || !Array.isArray(scope.rootMoves) || !scope.rootMoves.length ||
+            !Number.isSafeInteger(scope.depth) || scope.depth < settings.verificationDepth || scope.depth > 128 ||
+            scope.rootMoves.some(root => !UCI.test(root)) || new Set(scope.rootMoves).size !== scope.rootMoves.length ||
+            typeof scope.acceptanceUci !== 'string' || !offer.candidates.some(candidate => candidate.uci === scope.acceptanceUci))
+            fail('invalid-request', 'Policy requested an invalid continuation scope.');
+          check(request.signal);
+          evidence.push({ request: scope, analysis: await position(scope.fen, scope.rootMoves, scope.depth) });
+        }
+        if (scopes.length) {
+          verification = activeLogic.verifyContinuations(context, offer, verification, evidence);
+          if (!verification || !activeLogic.verificationSatisfies(verification, settings.verificationDepth))
+            fail('verification-unavailable', 'Policy could not verify the declined-recapture continuations.');
+        }
       }
       if (verification) after.sacrificeVerification = verification;
       check(request.signal);

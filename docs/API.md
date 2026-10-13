@@ -112,6 +112,57 @@ and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
 `createKnightsEyePolicyRuntime`. Applications generate historical widget strings
 from these installed exports; application source is never a fallback policy owner.
 
+## Brilliant policy 44 candidate
+
+The unsafe-piece, trapped-piece and rescue heuristics are adapted from the
+ideas in [WintrChess](https://github.com/WintrCat/wintrchess) (GPL-3.0). No
+WintrChess code or dependency is included. This implementation remains MIT.
+The board values are pawn 1, knight/bishop 3, rook 5 and queen 9. A non-pawn,
+non-king piece is unsafe when a cheaper piece attacks it, or when direct and
+compatible x-ray attackers outnumber direct and compatible x-ray defenders,
+subject to pawn/cheap-defender and defended-rook-after-minor-capture exceptions.
+The moving side's unsafe and trapped pieces are compared before and after the
+move. A quiet move that saves its unsafe moving piece is a rescue unless it
+leaves a newly unsafe, higher-value piece as the actual offer.
+
+Knight's Eye's own extensions allow combinations with counter-threats, use the
+best alternative move excluding the played move for the .94 already-winning
+gate, and use admitted engine evaluation for soundness. The played move must be
+near-best (at most .025 expected-points loss) and leave at least .40 expected
+points. An admitted favorable mate for the played move can bypass the .94
+alternative gate only when the covered alternative has no favorable mate
+evidence; later engine searches can still change that finding. Every legal
+enumerated legal offered-piece acceptance is searched at the verification depth, and the worst
+acceptance outcome must remain at or above .40 expected points.
+
+The bounded forcing extension admits a temporarily uncompensated piece offer
+when the static rule would otherwise call it trapped or rescued. A trapped
+piece's capture can qualify if a legal checking reply remains down at least
+120 cp and the acceptance search proves mate. A declined-recapture candidate
+must have an equal material-restoring recapture on the board. The policy
+enumerates **all** such recaptures and legal checks/captures that keep a deficit
+of at least 120 cp after the second ply; when checked, all legal evasions are
+considered. It searches those replies together from the exact post-acceptance
+FEN at the verification depth. A declining reply must leave at least .40
+expected points for the mover and score within .025 of the best equal
+recapture. This comparison uses scores, not the acceptance PV's chosen second
+move. Scopes above 16 roots provide no declined-recapture proof.
+
+`continuationRequests(context, offer, primaryVerification)` returns the exact
+post-acceptance `{fen, depth, rootMoves, acceptanceUci}` scopes. The scope
+depth equals the admitted primary acceptance depth. The service acquires
+and admits each restricted search. `verifyContinuations(context, offer,
+primaryVerification, evidence)` requires the full matching root set, legal
+PVs, finite scores, correct FEN provenance when supplied and achieved depth at
+least the scope depth. A prepared host must search at that depth even when its
+normal verification setting is lower; a shallower continuation cannot inherit
+the primary proof's depth.
+Prepared hosts have the same hooks but must provide genuine current live
+`PositionAnalysis` objects; recorded decisions and prior PV snippets do not
+count. A missing or incomplete continuation returns unavailable through the
+service or no Brilliant proof through a prepared host. The 16-root bound and
+real-engine corpus impact are qualification conditions for this candidate.
+
 ## Material evaluation conflicts
 
 Policy 42 exposes `classificationComparison(context)` both on the policy and its

@@ -121,6 +121,23 @@ Great/uniqueness or replace unrestricted rankings. A failed required comparison
 returns unavailable so hosts can retain their last completed label without new UI.
 See [comparison acquisition](docs/API.md#material-evaluation-conflicts).
 
+## Classification policy 44 candidate
+
+Brilliant requires a near-best move, a real offered piece, and sound engine
+outcomes after every enumerated legal acceptance. The board check considers
+piece values, attackers and defenders, x-ray batteries, rescues and trapped
+pieces. It also permits combinations that create counter-threats. The special
+declined-recapture witness enumerates bounded legal forcing replies on the
+board and compares their restricted search outcomes with equal recaptures.
+The checking-combination witness requires a legal checking reply and an
+admitted favorable mate after acceptance. See the [Brilliant policy details](docs/API.md#brilliant-policy-44-candidate).
+
+## Acknowledgements
+
+The unsafe-piece, trapped-piece and rescue ideas are adapted from the prose
+description of [WintrChess](https://github.com/WintrCat/wintrchess). No
+WintrChess code or dependency is included; this package remains MIT.
+
 ## Development
 
 ```sh

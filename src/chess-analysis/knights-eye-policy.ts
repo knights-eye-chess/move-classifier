@@ -1,5 +1,5 @@
 import { createKnightsEyePolicyRuntime, CLASSIFIER_VERSION } from './knights-eye-policy-runtime.js';
-import type { AnalysisContext, ClassificationComparisonRequest, AnalysisPolicy, ChessConstructor, ChessMove, ClassificationDecision, VerificationState } from './contracts';
+import type { AnalysisContext, ClassificationComparisonRequest, AnalysisPolicy, ChessConstructor, ChessMove, ClassificationDecision, VerificationState, ContinuationScope, ContinuationEvidence } from './contracts';
 import type { PolicyIdentity } from './recorded-decision';
 import type { EngineLine, PositionAnalysis } from './analysis-types';
 
@@ -15,6 +15,9 @@ export type SacrificeCandidate = {
   materialOffer: number; offerBaselineFen: string; unavoidableMaterialExposure: number;
   voluntaryOfferCap: number; directRecoveryResidual: number; directRecoveryCount: number;
   directRecoveryUcis: string[]; recoveryNetLosses: number[]; bestImmediateRecoveryNet: number;
+  boardCounterplay: string[];
+  offerMode: 'static' | 'declined-recapture' | 'forcing-check';
+  equalRecaptureUcis: string[]; declineReplyUcis: string[]; continuationOverBudget: boolean;
   materialThreadOrigin: 'inherited-exchange' | 'created-offer';
 };
 export type SacrificeVerification = {
@@ -30,6 +33,12 @@ export type SacrificeVerification = {
   eventualSameSquareRecovery: boolean; materialThreadOrigin: 'inherited-exchange' | 'created-offer';
   minimumConversionGain: number; materialWindowPlies: number; materialConversionPlies: number;
   immediateRecovery: boolean; bestImmediateRecoveryNet: number;
+  coverageComplete: boolean; verifiedCandidateUcis: string[]; worstAcceptedEp: number;
+  offerMode: SacrificeCandidate['offerMode']; declinedRecaptureWitness: boolean;
+  forcingCheckWitness: boolean; replyMaterialDeficit: number;
+  continuationComplete: boolean; continuationStatus: 'none' | 'pending' | 'qualified' | 'unsound' | 'over-budget';
+  acceptanceLines: { uci: string; depth: number; scoreCp: number | null; mate: number | null; pv: string[] }[];
+  declineBestEp?: number; recaptureBestEp?: number; continuationRoots?: string[];
 };
 export type MaterialOpportunity = {
   qualifies: boolean; opportunityType: 'clean_material_win'; bestMove: string; bestMoveSan: string;
@@ -70,7 +79,7 @@ export type KnightsEyeDecision = ClassificationDecision & {
   abandonedForcedMate: boolean; missedSpecial: boolean; missedMaterialOpportunity: boolean;
   missedOpportunity: boolean; sacrificeCandidates: SacrificeCandidate[];
   sacrificeVerification: SacrificeVerification | null;
-  candidates: PreparedEngineLine[]; second: PreparedEngineLine | undefined; secondEp: number; secondUtility: number;
+  candidates: PreparedEngineLine[]; second: PreparedEngineLine | undefined; secondEp: number; alternativeEp: number; playedMateOnly: boolean; secondUtility: number;
   uniqueGap: number; priorEp: number; matingLine: boolean;
   mateLossClassification: '' | 'miss' | 'mistake' | 'blunder'; bestSpecial: BestMoveSpecial;
   bestMaterialOpportunity: MaterialOpportunity;
@@ -117,10 +126,14 @@ export type KnightsEyePreparedOperations = {
   terminalPositionResult(fen: string, depth: number): PositionAnalysis | null;
   materialExchangeForMove(move: ChessMove, fen: string, previous?: MaterialExchangeState | null): MaterialExchangeState;
   canLegallyCapture(fen: string, square: string): boolean;
+  unsafePieces(fen: string, white: boolean, rookMinorCaptureSquare: string): string[];
+  trappedUnsafePieces(fen: string, white: boolean, unsafe: string[]): string[];
   sacrificeCaptureCandidates(move: ChessMove, beforeFen: string, afterFen: string, priorOwnBeforeFen?: string, exchangeThreadBaselineFen?: string): SacrificeCandidate[];
   sacrificeVerificationKey(afterFen: string, candidates: readonly SacrificeCandidate[]): string;
   evaluateSacrificeLines(move: ChessMove, beforeFen: string, afterFen: string, candidates: SacrificeCandidate[], lines: PreparedEngineLine[], source: string, complete: boolean): SacrificeLineEvaluation;
   sacrificeVerificationState(move: ChessMove, beforeFen: string, afterFen: string, after?: PreparedPosition | null, priorOwnBeforeFen?: string, exchangeThreadBaselineFen?: string | null): VerificationState<SacrificeVerification, SacrificeCandidate>;
+  continuationRequests(context: PreparedAnalysisContext, state: VerificationState<SacrificeVerification, SacrificeCandidate>, verification: SacrificeVerification): ContinuationScope[];
+  verifyContinuations(context: PreparedAnalysisContext, state: VerificationState<SacrificeVerification, SacrificeCandidate>, verification: SacrificeVerification, evidence: readonly ContinuationEvidence[]): SacrificeVerification | null;
   classifyAnalyzedMove(context: PreparedAnalysisContext): KnightsEyeDecision;
 };
 export type KnightsEyeAnalysisPolicy = AnalysisPolicy<KnightsEyeDecision, MaterialExchangeState, SacrificeVerification, SacrificeCandidate> & {
@@ -137,7 +150,7 @@ export function createKnightsEyePolicy(Chess: ChessConstructor, engineKind = 'st
   // Acquisition requests keep private caches even when the prepared consumer
   // uses host caches. Never import a host's existing verification into a fork.
   return { ...native, identity: KNIGHTS_EYE_POLICY, fork: () => createKnightsEyePolicy(Chess, engineKind, { historyContext: options.historyContext }),
-    verificationSatisfies: (verification, depth) => verification.classifierVersion === CLASSIFIER_VERSION && verification.depth >= depth,
+    verificationSatisfies: (verification, depth) => verification.classifierVersion === CLASSIFIER_VERSION && verification.coverageComplete && verification.depth >= depth,
     classify(context: AnalysisContext<MaterialExchangeState, SacrificeVerification>) {
       // The service selects verification at the configured depth. Avoid allowing
       // a shallower ordinary MultiPV line to shadow that explicit verification.
