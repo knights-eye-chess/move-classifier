@@ -1,5 +1,5 @@
 import { createKnightsEyePolicyRuntime, CLASSIFIER_VERSION } from './knights-eye-policy-runtime.js';
-import type { AnalysisContext, AnalysisPolicy, ChessConstructor, ChessMove, ClassificationDecision, VerificationState } from './contracts';
+import type { AnalysisContext, ClassificationComparisonRequest, AnalysisPolicy, ChessConstructor, ChessMove, ClassificationDecision, VerificationState } from './contracts';
 import type { PolicyIdentity } from './recorded-decision';
 import type { EngineLine, PositionAnalysis } from './stockfish-adapter';
 
@@ -49,7 +49,7 @@ export type BestMoveSpecial = {
 export type PreparedEngineLine = Omit<EngineLine, 'multipv' | 'scoreProvenance'> & {
   multipv?: number;
   scoreProvenance?: {
-    kind: 'root-search' | 'multipv-derived' | 'subsequent-position' | 'restored-fallback' | 'legacy-unknown' | 'terminal-position';
+    kind: 'root-search' | 'multipv-derived' | 'subsequent-position' | 'restored-fallback' | 'legacy-unknown' | 'terminal-position' | 'reconciliation-root';
     fen?: string | null; originatingDepth?: number | null; reportedDepth?: number | null;
     fallbackDepth?: number | null; engineBuild?: string; command?: string | null;
   };
@@ -57,6 +57,8 @@ export type PreparedEngineLine = Omit<EngineLine, 'multipv' | 'scoreProvenance'>
 export type KnightsEyeLabel = 'brilliant' | 'great' | 'best' | 'good' | 'okay' | 'dubious' | 'mistake' | 'miss' | 'blunder' | 'book' | 'forced' | 'interesting';
 export type KnightsEyeDecision = ClassificationDecision & {
   classification: KnightsEyeLabel;
+  comparisonSource: 'root-candidate' | 'after-position' | 'comparison-root' | 'checkmate' | 'terminal-position';
+  comparisonBestmove: string; comparisonDepth: number; comparisonCandidates: PreparedEngineLine[] | null;
   beforeCp: number; afterForMover: number; loss: number; bestEp: number; afterEp: number;
   epLoss: number; qualityLoss: number; bestUtility: number; playedUtility: number;
   bestMate: number | null; playedMate: number | null; mateDifference: number | null;
@@ -104,6 +106,8 @@ export type RecordedClassificationSignals = Pick<KnightsEyeDecision,
   book: boolean; outcomeEpLoss: number; mateLossClassification: KnightsEyeDecision['mateLossClassification'] | null;
 };
 export type KnightsEyePreparedOperations = {
+  classificationComparison(context: PreparedAnalysisContext): ClassificationComparisonRequest | null;
+  admitClassificationComparison(context: PreparedAnalysisContext, request: ClassificationComparisonRequest, result: PositionAnalysis): PositionAnalysis | null;
   classifyRecordedSignals(signals: RecordedClassificationSignals): KnightsEyeLabel;
   numericScore(position?: Pick<PreparedPosition, 'scoreCp' | 'mate'> | null): number;
   expectedPoints(cp: number): number;
@@ -126,7 +130,7 @@ export type KnightsEyeAnalysisPolicy = AnalysisPolicy<KnightsEyeDecision, Materi
   readonly prepared: KnightsEyePreparedOperations;
 };
 
-/** Typed boundary around the unchanged native policy-40 computation. No default
+/** Typed boundary around the native policy computation. No default
  * opening data, engine hosting, source evaluation or persistence is imported. */
 export function createKnightsEyePolicy(Chess: ChessConstructor, engineKind = 'stockfish', options: KnightsEyePolicyOptions = {}): KnightsEyeAnalysisPolicy {
   const native = createKnightsEyePolicyRuntime(Chess, engineKind, options.historyContext, options.preparedCaches) as unknown as Omit<KnightsEyeAnalysisPolicy, 'identity' | 'verificationSatisfies' | 'classify'> & { classify(context: AnalysisContext<MaterialExchangeState, SacrificeVerification>, verification?: SacrificeVerification): KnightsEyeDecision };

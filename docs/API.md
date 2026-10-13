@@ -78,3 +78,53 @@ The compatibility entry exports `POSITION_RULES_SOURCE`, `CLASSIFIER_RULES_SOURC
 and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
 `createKnightsEyePolicyRuntime`. Applications generate historical widget strings
 from these installed exports; application source is never a fallback policy owner.
+
+## Material evaluation conflicts
+
+Policy 42 exposes `classificationComparison(context)` both on the policy and its
+`prepared` operations. It returns `null` or `{fen, depth, multiPv, rootMoves}`.
+For a played root line, disagreement means at least .08 expected points versus
+the mover-adjusted independent child score, or opposite mate signs. A root whose
+horizon covers the child (`rootDepth >= childDepth + 1`) needs no extra search.
+When the played move is absent, ordinary losses do not trigger: the child must
+contradict the best root by improving expected outcome by .08, have an opposing
+mate sign, or create an unsupported mate-utility downgrade. Legally verified
+missed mate-in-one is exempt. Same-sign mate-distance drift is not a trigger.
+
+The comparison requests the played move and up to two leading alternatives at
+`max(beforeDepth, afterDepth + 1)`. This is independent of sacrifice verification
+depth. `admitClassificationComparison(context, request, result)` returns a detached
+admitted position or `null`, checking exact roots, legal PVs, achieved depth,
+finite scores and complete coverage. Admitted comparison lines carry
+`reconciliation-root` provenance. The host places that evidence in
+`context.comparisonAnalysis` for prepared classification; before/after evidence
+must remain unchanged. The decision exposes `comparisonSource`,
+`comparisonBestmove`, `comparisonDepth` and `comparisonCandidates` for a coherent
+panel. Restricted candidates do not establish unrestricted ranking, uniqueness,
+or new Great/Brilliant credit. A strictly deeper unrestricted root containing the
+played move supersedes an older comparison.
+
+The acquisition service's optional policy hooks preserve behavior for other
+policies. Its comparison budget survives policy forks: one attempt per exact
+occurrence and cache generation. Low-level hosts can supply request-level
+`comparisonKey`; the replay core derives it from starting FEN plus exact history.
+Successful proof is reusable across calls, failed attempts do not repeat on live
+depth ticks, and `clearEvidence()` resets the replay core's epoch. Comparison
+results never enter the ordinary position cache. Hosts creating short-lived
+services must retain their own generation-scoped scheduling budget.
+
+Supplied-only calls require the restricted `{kind:'live-position', fen,
+rootMoves, analysis}` envelope as well as before/after inputs; they never use an
+acquired comparison or silently search. Failure/incomplete/cancelled comparison
+returns unavailable, never an unsupported newly computed label. Hosts retain
+their last completed classification. Comparison counts and time overhead must
+be measured with corpus qualification before deployment.
+
+A low-level host may carry a previously completed live comparison in
+`request.context.comparisonAnalysis`. The service re-admits its own achieved
+depth and complete root set, including the played move and current root best,
+and rejects conflicting known engine builds. A strictly deeper unrestricted root
+supersedes it. Child depth ticks do not demand a second search after resolution.
+The caller owns its engine/generation scope and must never populate this field
+from recorded display data; attribution has the same trust limits as other live
+supplied evidence. Supplied-only replay still requires explicit scoped envelopes.
