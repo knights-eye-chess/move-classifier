@@ -153,8 +153,8 @@ its historical extraction; no application checkout is required to build it.
 The checked pack command runs the build and tests before creating an archive.
 The real-engine corpus is opt-in: set `KE_CORPUS_ENGINE` to a Stockfish JS entry
 point and run `node --test tests/brilliant-corpus.test.mjs`. The fixture metadata
-pins the browser-equivalent Hash and movetime budget; `KE_CORPUS_DEPTH` selects
-the requested depth for Lite or deeper qualification.
+pins the browser's Hash and movetime budget with isolated fixtures;
+`KE_CORPUS_DEPTH` selects the requested depth for Lite or deeper qualification.
 
 See [npm publishing](NPM-PUBLISHING.md) for release preparation.
 

@@ -171,6 +171,9 @@ service or no Brilliant proof through a prepared host. The 16-root bound and
 real-engine corpus impact are qualification conditions for this candidate.
 The opt-in component corpus uses a single thread, 16 MiB Hash, and the
 browser full-game default of three seconds per position or restricted search.
+It clears the engine hash and position cache between independent fixtures for
+reproducibility. The browser may retain a warm engine session across jobs, so
+its exact search path can still differ.
 The recorded depth is the **achieved** depth when movetime stops a search
 early. Its 25 fixtures include short branches and are not interchangeable
 with the application's full Great-and-Brilliant acceptance inventory.

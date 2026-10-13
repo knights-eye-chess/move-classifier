@@ -59,6 +59,11 @@ class Stockfish {
     this.send(`setoption name Hash value ${this.budget.hashMb}`);
     this.send('isready'); await this.wait(line => line === 'readyok');
   }
+  async newGame() {
+    this.send('ucinewgame');
+    this.send('setoption name Clear Hash');
+    this.send('isready'); await this.wait(line => line === 'readyok');
+  }
   async analyze(fen, requestedDepth, roots = [], restricted = false) {
     const movetimeMs = restricted ? this.budget.restrictedMovetimeMs : this.budget.positionMovetimeMs;
     const started = performance.now();
@@ -159,7 +164,7 @@ async function classifyFixture(fixture, engine, cache) {
 
 const fixtures = [...fixtureData.fixtures, ...fixtureData.interestingFixtures, ...fixtureData.addedFixtures, fixtureData.nc5SingleMoveFixture];
 test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interesting sets', { skip: !enginePath, timeout: 3600000 }, async () => {
-  const engine = new Stockfish(enginePath, engineBudget), cache = new Map(), differences = [];
+  const engine = new Stockfish(enginePath, engineBudget), differences = [];
   console.log(`[engine budget] ${JSON.stringify({ requestedDepth: depth, ...engineBudget })}`);
   const startIndex = Number(process.env.KE_CORPUS_START || 1);
   const endIndex = Number(process.env.KE_CORPUS_END || fixtures.length);
@@ -171,7 +176,11 @@ test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interest
   try {
     for (const [index, fixture] of selected.entries()) {
       console.log(`[real policy ${index + 1}/${selected.length}] ${fixture.name}`);
-      const result = await classifyFixture(fixture, engine, cache);
+      // Independent corpus PGNs must not inherit results or hash state from
+      // fixture order. The browser can reuse a warm engine session across jobs;
+      // this isolated profile controls that source of test variation.
+      await engine.newGame();
+      const result = await classifyFixture(fixture, engine, new Map());
       if (result.continuationSearches) console.log(`[continuations] ${fixture.name}: ${result.continuationSearches} searches, ${result.continuationRoots} roots, ${Math.round(result.continuationMs)} ms`);
       const variants = fixture.expectedSpecialVariants || [{ brilliant: fixture.expected || [], interesting: fixture.expectedInteresting || [] }];
       const actual = { brilliant: result.sets.brilliant, interesting: result.sets.interesting };

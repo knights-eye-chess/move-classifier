@@ -1,6 +1,6 @@
 {
   "engineBudget": {
-    "profile": "browser-full-game-default",
+    "profile": "isolated-fixture-browser-budget",
     "threads": 1,
     "hashMb": 16,
     "positionMovetimeMs": 3000,
