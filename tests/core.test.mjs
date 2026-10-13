@@ -66,3 +66,31 @@ test('native Knight’s Eye policy classifies without engine acquisition from su
   const incomplete = await core.classifySuppliedEvidence({ startFen, history: ['e2e4'], depth: 18, evidence: [] });
   assert.equal(incomplete.status, 'unavailable'); assert.equal('decision' in incomplete, false);
 });
+
+const twoReplyFen = '7r/p1p1p1kp/2p2rpQ/3q4/3P4/2P5/P1P2PP1/R3K2R b KQ - 5 18';
+function completedSearch({ multiPv = 3, rootMoves = [], lines = ['g7g8', 'g7f7'], depth = 18 } = {}) {
+  let receive;
+  const adapter = createStockfishAdapter((_label, listener) => {
+    receive = listener;
+    return { postMessage() {}, terminate() {} };
+  }, 1000);
+  const pending = adapter.search({ fen: twoReplyFen, depth: 18, multiPv, rootMoves });
+  for (const message of ['frame-ready', 'uciok', 'readyok', ...lines.map((move, i) =>
+    `info depth ${depth} multipv ${i + 1} score cp ${20 - i * 10} pv ${move}`), 'bestmove g7g8']) receive(message);
+  return pending;
+}
+test('completed unrestricted MultiPV accepts up to the requested number of lines', async () => {
+  assert.deepEqual(new Chess(twoReplyFen).moves().sort(), ['Kf7', 'Kg8']);
+  for (const lines of [['g7g8', 'g7f7'], ['g7g8']]) {
+    const result = await completedSearch({ lines });
+    assert.deepEqual(result.candidates.map(line => line.pv[0]), lines);
+    assert.equal(result.bestmove, 'g7g8');
+    assert.equal(result.depth, 18);
+  }
+});
+test('fewer-line acceptance does not admit empty, shallow, duplicate or missing explicit roots', async () => {
+  for (const args of [{ lines: [] }, { depth: 17 }, { lines: ['g7g8', 'g7g8'] },
+    { multiPv: 2, rootMoves: ['g7g8', 'g7f7'], lines: ['g7g8'] }]) {
+    await assert.rejects(completedSearch(args), /coverage/);
+  }
+});

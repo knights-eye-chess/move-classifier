@@ -37,10 +37,11 @@ export function createStockfishAdapter(acquire: EngineAcquire, timeoutMs = 65000
         request.signal?.removeEventListener('abort', abort);
         try { port?.terminate(); } catch { /* Settlement still belongs to this request. */ }
         if (error) { reject(error); return; }
-        const candidates = Array.from({ length: count }, (_, index) => found[index + 1]);
-        const complete = candidates.every(line => line && line.depth >= request.depth && line.pv.length > 0 &&
+        // MultiPV is an upper bound for an unrestricted completed search.
+        const candidates = Object.values(found).sort((a, b) => a.multipv - b.multipv);
+        const complete = candidates.length > 0 && candidates.every(line => line && line.depth >= request.depth && line.pv.length > 0 &&
           (line.scoreCp !== null || line.mate !== null));
-        const covered = complete && new Set(candidates.map(line => line.pv[0])).size === count &&
+        const covered = complete && new Set(candidates.map(line => line.pv[0])).size === candidates.length &&
           (!roots.length || candidates.every(line => roots.includes(line.pv[0])) && roots.every(root => candidates.some(line => line.pv[0] === root)));
         if (!covered || !bestmove || !validUciMove(bestmove) || candidates[0].pv[0] !== bestmove) {
           reject(new Error('Stockfish did not complete requested depth, score and root coverage.'));
