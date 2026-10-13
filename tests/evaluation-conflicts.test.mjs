@@ -234,7 +234,7 @@ for (const [color, root, move] of [['White', fen, 'e5e6'], ['Black', '8/7p/8/8/4
     assert.equal(p.prepared.classificationComparison(c), null);
     assert.ok(!['great', 'brilliant'].includes(d.classification));
     assert.equal(d.onlyViable, false);
-    assert.equal(d.uniqueGap, Math.max(0, d.bestEp - d.secondEp));
+    assert.equal(d.uniqueGap, Math.min(Math.max(0, d.bestEp - d.secondEp), band === 'winning' ? d.epLoss : Infinity));
     assert.equal(d.bestSpecial.onlyViable, false);
     assert.equal(d.bestSpecial.uniqueGap, d.uniqueGap);
     assert.equal(d.bestSpecial.qualifies, false);
@@ -251,5 +251,20 @@ for (const [color, root, move] of [['White', fen, 'e5e6'], ['Black', '8/7p/8/8/4
     const d = policy().classifyPrepared(context({ root, move, beforeValues: [{ mate: 3 }, { mate: 16 }, { mate: 17 }], afterValue: { mate: -2 } }));
     assert.equal(d.uniqueGap, Math.max(0, d.bestUtility - d.secondUtility));
     assert.equal(d.onlyViable, d.uniqueGap >= .075);
+  });
+}
+
+for (const [color, root, move] of [['White', fen, 'e5e6'], ['Black', '8/7p/8/8/4k3/8/8/K7 b - - 0 1', 'e4e3']]) {
+  for (const second of [{ mate: 30 }, { cp: 0 }]) test(`${color}: absent played winning cp move disproves root-only uniqueness against ${JSON.stringify(second)}`, () => {
+    const c = context({ root, move, included: false, beforeValues: [{ mate: 16 }, second, second], afterValue: { cp: -4197 } });
+    const d = policy().classifyPrepared(c);
+    assert.equal(d.playedBest, false);
+    assert.equal(d.nearBest, true);
+    assert.ok(!['great', 'brilliant'].includes(d.classification));
+    assert.equal(d.uniqueGap, d.epLoss);
+    assert.equal(d.onlyViable, false);
+    assert.equal(d.bestSpecial.onlyViable, false);
+    assert.equal(d.bestSpecial.qualifies, false);
+    assert.equal(d.missedSpecial, false);
   });
 }
