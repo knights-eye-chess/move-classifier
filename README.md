@@ -98,7 +98,9 @@ after-outcomes preserve Miss. The rule also applies to already-losing positions;
 existing higher-priority labels and verified-mate handling remain unchanged.
 Recorded policy-40 decisions keep their original identity and are not relabeled.
 
-## Classification policy 42
+## Classification policy 43
+
+Mate/cp alternatives in the same winning or losing outcome band use their expected-points gap for uniqueness, just as for move quality. A mate score alongside another completely winning move therefore does not establish an only viable move or award Great. A different played move with a winning centipawn score also bounds uniqueness when the root best is a mate, even if that played move was absent from the root candidates. Genuine outcome gaps and comparisons between two mate scores retain their existing behavior. Saved policy-42 decisions require reclassification.
 
 The played move uses its own before-position root score when available. An
 independent child search retains its original values and can trigger one bounded
