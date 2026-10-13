@@ -128,3 +128,10 @@ supersedes it. Child depth ticks do not demand a second search after resolution.
 The caller owns its engine/generation scope and must never populate this field
 from recorded display data; attribution has the same trust limits as other live
 supplied evidence. Supplied-only replay still requires explicit scoped envelopes.
+
+### Completed Stockfish MultiPV searches
+
+For unrestricted searches, MultiPV is an upper bound. On `bestmove`, the adapter
+accepts the nonempty returned candidate set even when it contains fewer lines
+than requested. It retains achieved-depth, score, distinct-root and bestmove
+checks. Explicit `searchmoves` requests still require every requested root.
