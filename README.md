@@ -98,6 +98,20 @@ after-outcomes preserve Miss. The rule also applies to already-losing positions;
 existing higher-priority labels and verified-mate handling remain unchanged.
 Recorded policy-40 decisions keep their original identity and are not relabeled.
 
+## Classification policy 42
+
+The played move uses its own before-position root score when available. An
+independent child search retains its original values and can trigger one bounded
+same-root comparison when the evaluations disagree materially. Same-outcome-band
+mate/centipawn format changes use ordinary expected-outcome loss; a legally
+verified missed mate-in-one retains its precedence. Policy 41's narrow Miss
+severity override is unchanged.
+
+Comparisons are edge-local, require complete legal coverage, and never establish
+Great/uniqueness or replace unrestricted rankings. A failed required comparison
+returns unavailable so hosts can retain their last completed label without new UI.
+See [comparison acquisition](docs/API.md#material-evaluation-conflicts).
+
 ## Development
 
 ```sh

@@ -1,5 +1,5 @@
 /** `mate` is Stockfish's signed mate-in-moves score, not a count of plies. */
-export type EngineLine = { multipv: number; depth: number; scoreCp: number | null; mate: number | null; pv: string[]; scoreProvenance?: { kind: "root-search"; fen: string; originatingDepth: number; reportedDepth: number; engineBuild: string } };
+export type EngineLine = { multipv: number; depth: number; scoreCp: number | null; mate: number | null; pv: string[]; scoreProvenance?: { kind: "root-search" | "reconciliation-root"; fen: string; originatingDepth: number; reportedDepth: number; engineBuild: string } };
 export type PositionAnalysis = EngineLine & { bestmove: string; candidates: EngineLine[]; terminal?: boolean; sacrificeVerification?: unknown };
 export type SearchRequest = { fen: string; depth: number; multiPv?: number; rootMoves?: string[]; signal?: AbortSignal };
 export type EnginePort = { postMessage(command: string): void; terminate(): void };
