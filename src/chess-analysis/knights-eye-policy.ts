@@ -12,8 +12,8 @@ export type MaterialExchangeState = {
 };
 export type SacrificeCandidate = {
   uci: string; capturedSquare: string; capturedPiece: string; capturedValue: number;
-  materialOffer: number; offerBaselineFen: string; unavoidableMaterialExposure: number;
-  voluntaryOfferCap: number; directRecoveryResidual: number; directRecoveryCount: number;
+  materialOffer: number; rawOffer: number; offerBaselineFen: string;
+  directRecoveryResidual: number; directRecoveryCount: number;
   directRecoveryUcis: string[]; recoveryNetLosses: number[]; bestImmediateRecoveryNet: number;
   boardCounterplay: string[];
   offerMode: 'static' | 'declined-recapture' | 'forcing-check';
@@ -24,18 +24,14 @@ export type SacrificeVerification = {
   classifierVersion: number; candidateScopeKey: string; candidateUcis: string[];
   source: string; depth: number; acceptedMove: string; capturedSquare: string;
   capturedPiece: string; capturedValue: number; materialOffer: number;
-  initialMaterialOffer: number; qualifyingMaterialOffer: number; rawQualifyingMaterialOffer: number;
-  persistentMaterialOffer: number; lastingMaterialDeficit: number; materialConversionGain: number;
+  qualifyingMaterialOffer: number; rawQualifyingMaterialOffer: number;
   offerBaselineFen: string; scoreCp: number | null; mate: number | null; pv: string[];
-  materialPath: number[]; materialThreadPath: number[]; favorableMate: boolean;
-  unavoidableMaterialExposure: number; voluntaryOfferCap: number; directRecoveryResidual: number;
-  directRecoveryCount: number; directRecoveryUcis: string[]; directRecoveryApplied: boolean;
-  eventualSameSquareRecovery: boolean; materialThreadOrigin: 'inherited-exchange' | 'created-offer';
-  minimumConversionGain: number; materialWindowPlies: number; materialConversionPlies: number;
-  immediateRecovery: boolean; bestImmediateRecoveryNet: number;
+  favorableMate: boolean; directRecoveryResidual: number;
+  directRecoveryCount: number; directRecoveryUcis: string[];
+  materialThreadOrigin: 'inherited-exchange' | 'created-offer';
   coverageComplete: boolean; verifiedCandidateUcis: string[]; worstAcceptedEp: number;
   offerMode: SacrificeCandidate['offerMode']; declinedRecaptureWitness: boolean;
-  forcingCheckWitness: boolean; replyMaterialDeficit: number;
+  forcingCheckWitness: boolean;
   continuationComplete: boolean; continuationStatus: 'none' | 'pending' | 'qualified' | 'unsound' | 'over-budget';
   acceptanceLines: { uci: string; depth: number; scoreCp: number | null; mate: number | null; pv: string[] }[];
   declineBestEp?: number; recaptureBestEp?: number; continuationRoots?: string[];
@@ -101,6 +97,7 @@ export type KnightsEyeHistoryContext = {
 /** These getters return runtime-only host caches, never recorded decisions. The
  * host replaces or clears them when its game/engine/evidence epoch changes. */
 export type KnightsEyePreparedCaches = {
+  /** Deprecated compatibility input. Policy 45 has no forced-exposure cache. */
   materialExposure?(): Record<string, number>;
   sacrificeVerification?(): Record<string, SacrificeVerification>;
 };

@@ -1,4 +1,11 @@
 {
+  "engineBudget": {
+    "profile": "browser-full-game-default",
+    "threads": 1,
+    "hashMb": 16,
+    "positionMovetimeMs": 3000,
+    "restrictedMovetimeMs": 3000
+  },
   "fixtures": [
     {
       "name": "FixturePlayer001 vs FixturePlayer018",
@@ -188,6 +195,9 @@
     {
       "name": "FixturePlayer010 vs FixturePlayer001 through 13...O-O-O",
       "expected": [],
+      "optionalBrilliant": [
+        "12:h5"
+      ],
       "forbiddenBrilliant": [
         "26:O-O-O"
       ],

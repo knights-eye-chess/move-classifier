@@ -121,7 +121,7 @@ Great/uniqueness or replace unrestricted rankings. A failed required comparison
 returns unavailable so hosts can retain their last completed label without new UI.
 See [comparison acquisition](docs/API.md#material-evaluation-conflicts).
 
-## Classification policy 44 candidate
+## Classification policy 45 candidate
 
 Brilliant requires a near-best move, a real offered piece, and sound engine
 outcomes after every enumerated legal acceptance. The board check considers
@@ -130,7 +130,9 @@ pieces. It also permits combinations that create counter-threats. The special
 declined-recapture witness enumerates bounded legal forcing replies on the
 board and compares their restricted search outcomes with equal recaptures.
 The checking-combination witness requires a legal checking reply and an
-admitted favorable mate after acceptance. See the [Brilliant policy details](docs/API.md#brilliant-policy-44-candidate).
+admitted favorable mate after acceptance. See the [Brilliant policy details](docs/API.md#brilliant-policy-45-candidate).
+The remaining PV material-path calculation belongs only to the legacy
+Interesting tier; it is not part of the Brilliant proof.
 
 ## Acknowledgements
 
@@ -149,6 +151,10 @@ npm run pack:checked
 Edit the source in this repository. [SOURCE-ORIGIN.json](SOURCE-ORIGIN.json) records
 its historical extraction; no application checkout is required to build it.
 The checked pack command runs the build and tests before creating an archive.
+The real-engine corpus is opt-in: set `KE_CORPUS_ENGINE` to a Stockfish JS entry
+point and run `node --test tests/brilliant-corpus.test.mjs`. The fixture metadata
+pins the browser-equivalent Hash and movetime budget; `KE_CORPUS_DEPTH` selects
+the requested depth for Lite or deeper qualification.
 
 See [npm publishing](NPM-PUBLISHING.md) for release preparation.
 

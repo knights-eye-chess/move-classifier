@@ -49,6 +49,9 @@ test('a losing legal acceptance refutes a promising offered capture', () => {
   const verification = policy.verify(context, state, lines);
   assert.ok(verification.coverageComplete);
   assert.ok(verification.worstAcceptedEp < .4);
+  assert.deepEqual(['materialPath', 'materialThreadPath', 'persistentMaterialOffer',
+    'materialConversionGain', 'voluntaryOfferCap'].filter(field => Object.hasOwn(verification, field)), [],
+    'Brilliant proof carries board stake and engine outcome, not a PV material path');
   context.beforeAnalysis = { depth: 15, scoreCp: 20, mate: null, bestmove: context.move.uci,
     candidates: [{ depth: 15, scoreCp: 20, mate: null, pv: [context.move.uci] }, { depth: 15, scoreCp: 0, mate: null, pv: ['a5a6'] }] };
   context.afterAnalysis = { depth: 15, scoreCp: -20, mate: null, candidates: [], sacrificeVerification: verification };

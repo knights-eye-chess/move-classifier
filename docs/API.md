@@ -112,7 +112,7 @@ and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
 `createKnightsEyePolicyRuntime`. Applications generate historical widget strings
 from these installed exports; application source is never a fallback policy owner.
 
-## Brilliant policy 44 candidate
+## Brilliant policy 45 candidate
 
 The unsafe-piece, trapped-piece and rescue heuristics are adapted from the
 ideas in [WintrChess](https://github.com/WintrCat/wintrchess) (GPL-3.0). No
@@ -124,6 +124,10 @@ subject to pawn/cheap-defender and defended-rook-after-minor-capture exceptions.
 The moving side's unsafe and trapped pieces are compared before and after the
 move. A quiet move that saves its unsafe moving piece is a rescue unless it
 leaves a newly unsafe, higher-value piece as the actual offer.
+This board rule also decides whether an offered piece was trapped or lost
+anyway. There is no separate depth-three forced-loss search or voluntary-offer
+cap. The captured piece's value bounds the offered stake, and every legal
+same-square recovery is considered before a static offer qualifies.
 
 Knight's Eye's own extensions allow combinations with counter-threats, use the
 best alternative move excluding the played move for the .94 already-winning
@@ -131,9 +135,12 @@ gate, and use admitted engine evaluation for soundness. The played move must be
 near-best (at most .025 expected-points loss) and leave at least .40 expected
 points. An admitted favorable mate for the played move can bypass the .94
 alternative gate only when the covered alternative has no favorable mate
-evidence; later engine searches can still change that finding. Every legal
+evidence; later engine searches can still change that finding. Every
 enumerated legal offered-piece acceptance is searched at the verification depth, and the worst
-acceptance outcome must remain at or above .40 expected points.
+acceptance outcome must remain at or above .40 expected points. PV material
+paths, conversion gains and persistence do not enter the Brilliant proof.
+The older Interesting tier still computes its tactical payoff from the PV,
+only after its other gates pass; it is a separate policy under review.
 
 The bounded forcing extension admits a temporarily uncompensated piece offer
 when the static rule would otherwise call it trapped or rescued. A trapped
@@ -162,6 +169,11 @@ Prepared hosts have the same hooks but must provide genuine current live
 count. A missing or incomplete continuation returns unavailable through the
 service or no Brilliant proof through a prepared host. The 16-root bound and
 real-engine corpus impact are qualification conditions for this candidate.
+The opt-in component corpus uses a single thread, 16 MiB Hash, and the
+browser full-game default of three seconds per position or restricted search.
+The recorded depth is the **achieved** depth when movetime stops a search
+early. Its 25 fixtures include short branches and are not interchangeable
+with the application's full Great-and-Brilliant acceptance inventory.
 
 ## Material evaluation conflicts
 

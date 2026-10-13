@@ -12,9 +12,12 @@ import { createKnightsEyePolicy } from '@knights-eye-chess/move-classifier/polic
 const enginePath = process.env.KE_CORPUS_ENGINE;
 const depth = Number(process.env.KE_CORPUS_DEPTH || 15);
 const fixtureData = JSON.parse(readFileSync(new URL('./fixtures/brilliant-corpus.json', import.meta.url)));
+const engineBudget = fixtureData.engineBudget;
 
 class Stockfish {
-  constructor(entry) {
+  constructor(entry, budget) {
+    this.budget = budget;
+    this.searches = [];
     this.process = spawn(process.execPath, [entry], { stdio: ['pipe', 'pipe', 'pipe'] });
     this.lines = readline.createInterface({ input: this.process.stdout });
     this.waiters = [];
@@ -44,20 +47,26 @@ class Stockfish {
     return new Promise((resolve, reject) => {
       if (this.failure) { reject(this.failure); return; }
       const waiter = { accept, resolve, reject, lines: [], timer: null };
-      waiter.timer = setTimeout(() => { this.waiters = this.waiters.filter(item => item !== waiter); reject(new Error('Stockfish search timed out')); }, 180000);
+      waiter.timer = setTimeout(() => { this.waiters = this.waiters.filter(item => item !== waiter); reject(new Error('Stockfish search timed out')); }, Math.max(20000, this.budget.positionMovetimeMs + 10000));
       this.waiters.push(waiter);
     });
   }
   async init() {
-    this.send('uci'); await this.wait(line => line === 'uciok');
+    this.send('uci');
+    const uci = await this.wait(line => line === 'uciok');
+    this.engineName = uci.lines.find(line => line.startsWith('id name '))?.slice(8) || 'unknown';
+    this.send(`setoption name Threads value ${this.budget.threads}`);
+    this.send(`setoption name Hash value ${this.budget.hashMb}`);
     this.send('isready'); await this.wait(line => line === 'readyok');
   }
-  async analyze(fen, requestedDepth, roots = []) {
+  async analyze(fen, requestedDepth, roots = [], restricted = false) {
+    const movetimeMs = restricted ? this.budget.restrictedMovetimeMs : this.budget.positionMovetimeMs;
+    const started = performance.now();
     this.send(`setoption name MultiPV value ${roots.length || 3}`);
     this.send(`position fen ${fen}`);
-    this.send(`go depth ${requestedDepth}${roots.length ? ` searchmoves ${roots.join(' ')}` : ''}`);
+    this.send(`go depth ${requestedDepth} movetime ${movetimeMs}${roots.length ? ` searchmoves ${roots.join(' ')}` : ''}`);
     const received = await this.wait(line => line.startsWith('bestmove ')).catch(error => {
-      throw new Error(`Stockfish search failed at depth ${requestedDepth}, FEN ${fen}, roots ${roots.join(' ')}: ${error.message}`, { cause: error });
+      throw new Error(`Stockfish search failed at requested depth ${requestedDepth}, movetime ${movetimeMs} ms, FEN ${fen}, roots ${roots.join(' ')}: ${error.message}`, { cause: error });
     });
     const found = new Map();
     for (const line of received.lines) {
@@ -65,12 +74,18 @@ class Stockfish {
       const match = /\bdepth (\d+).*\bmultipv (\d+).*\bscore (cp|mate) (-?\d+).*\bpv (.+)/.exec(line);
       if (!match) continue;
       const [, actualDepth, rank, kind, score, pv] = match;
-      if (Number(actualDepth) !== requestedDepth) continue;
-      found.set(Number(rank), { multipv: Number(rank), depth: Number(actualDepth), scoreCp: kind === 'cp' ? Number(score) : null, mate: kind === 'mate' ? Number(score) : null, pv: pv.trim().split(/\s+/) });
+      if (Number(actualDepth) > requestedDepth) continue;
+      const prior = found.get(Number(rank));
+      if (!prior || Number(actualDepth) >= prior.depth)
+        found.set(Number(rank), { multipv: Number(rank), depth: Number(actualDepth), scoreCp: kind === 'cp' ? Number(score) : null, mate: kind === 'mate' ? Number(score) : null, pv: pv.trim().split(/\s+/) });
     }
     const candidates = [...found.values()].sort((a, b) => a.multipv - b.multipv);
-    assert.ok(candidates.length, `Stockfish returned no depth-${requestedDepth} line for ${fen}`);
-    return { ...candidates[0], bestmove: received.line.split(/\s+/)[1], candidates };
+    assert.ok(candidates.length, `Stockfish returned no scored line by depth ${requestedDepth} and movetime ${movetimeMs} ms for ${fen}`);
+    const achievedDepth = Math.min(...candidates.map(line => line.depth));
+    this.searches.push({ restricted, requestedDepth, achievedDepth, elapsedMs: Math.round(performance.now() - started),
+      rootCount: roots.length, fen });
+    return { ...candidates[0], depth: achievedDepth, requestedDepth,
+      bestmove: received.line.split(/\s+/)[1], candidates };
   }
   close() { this.send('quit'); }
 }
@@ -117,8 +132,8 @@ async function classifyFixture(fixture, engine, cache) {
     const state = policy.offer(context, context.afterAnalysis, exchange.inherited ? exchange.originFen : '');
     if (state.candidates.length) {
       const roots = state.candidates.map(candidate => candidate.uci);
-      const verified = await engine.analyze(afterFen, 10, roots);
-      let proof = policy.verify(context, state, verified.candidates);
+      const verified = await engine.analyze(afterFen, 10, roots, true);
+      let proof = verified.depth >= 10 ? policy.verify(context, state, verified.candidates) : null;
       if (proof) {
         const scopes = policy.continuationRequests(context, state, proof);
         const evidence = [];
@@ -126,7 +141,7 @@ async function classifyFixture(fixture, engine, cache) {
           continuationSearches++;
           continuationRoots += request.rootMoves.length;
           const started = performance.now();
-          const analysis = await engine.analyze(request.fen, request.depth, request.rootMoves);
+          const analysis = await engine.analyze(request.fen, request.depth, request.rootMoves, true);
           continuationMs += performance.now() - started;
           evidence.push({ request, analysis });
         }
@@ -144,12 +159,15 @@ async function classifyFixture(fixture, engine, cache) {
 
 const fixtures = [...fixtureData.fixtures, ...fixtureData.interestingFixtures, ...fixtureData.addedFixtures, fixtureData.nc5SingleMoveFixture];
 test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interesting sets', { skip: !enginePath, timeout: 3600000 }, async () => {
-  const engine = new Stockfish(enginePath), cache = new Map(), differences = [];
+  const engine = new Stockfish(enginePath, engineBudget), cache = new Map(), differences = [];
+  console.log(`[engine budget] ${JSON.stringify({ requestedDepth: depth, ...engineBudget })}`);
   const startIndex = Number(process.env.KE_CORPUS_START || 1);
-  const selected = fixtures.filter((fixture, index) => index + 1 >= startIndex &&
+  const endIndex = Number(process.env.KE_CORPUS_END || fixtures.length);
+  const selected = fixtures.filter((fixture, index) => index + 1 >= startIndex && index + 1 <= endIndex &&
     (!process.env.KE_CORPUS_FIXTURE || fixture.name.includes(process.env.KE_CORPUS_FIXTURE)));
-  assert.ok(selected.length, 'No corpus fixtures matched KE_CORPUS_FIXTURE');
+  assert.ok(selected.length, 'No corpus fixtures matched the selected range or KE_CORPUS_FIXTURE');
   await engine.init();
+  console.log(`[engine identity] ${engine.engineName}`);
   try {
     for (const [index, fixture] of selected.entries()) {
       console.log(`[real policy ${index + 1}/${selected.length}] ${fixture.name}`);
@@ -171,5 +189,11 @@ test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interest
       for (const forbidden of fixture.forbiddenBrilliant || []) if (actual.brilliant.includes(forbidden)) differences.push({ fixture: fixture.name, forbidden, actual });
     }
     assert.deepEqual(differences, []);
-  } finally { engine.close(); }
+  } finally {
+    const underDepth = engine.searches.filter(search => search.achievedDepth < search.requestedDepth);
+    console.log(`[engine searches] ${JSON.stringify({ total: engine.searches.length, restricted: engine.searches.filter(search => search.restricted).length,
+      underDepth: underDepth.length, slowestMs: Math.max(0, ...engine.searches.map(search => search.elapsedMs)),
+      slowestFen: engine.searches.toSorted((a, b) => b.elapsedMs - a.elapsedMs)[0]?.fen || '' })}`);
+    engine.close();
+  }
 });
