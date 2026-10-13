@@ -1,0 +1,23 @@
+name: Deprecate superseded classifier dev.12
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+jobs:
+  deprecate:
+    if: github.ref == 'refs/heads/dev' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+          registry-url: https://registry.npmjs.org/
+      - name: Require corrected successor before deprecating exact faulty version
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          test "$(npm view @knights-eye-chess/move-classifier@0.1.0-dev.13 version)" = '0.1.0-dev.13'
+          npm deprecate '@knights-eye-chess/move-classifier@0.1.0-dev.12' 'False Great classifications in mate-plus-winning-cp positions; use 0.1.0-dev.13 or later.'
