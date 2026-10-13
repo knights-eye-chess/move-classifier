@@ -126,7 +126,7 @@ export type KnightsEyeAnalysisPolicy = AnalysisPolicy<KnightsEyeDecision, Materi
   readonly prepared: KnightsEyePreparedOperations;
 };
 
-/** Typed boundary around the unchanged native policy-40 computation. No default
+/** Typed boundary around the native policy computation. No default
  * opening data, engine hosting, source evaluation or persistence is imported. */
 export function createKnightsEyePolicy(Chess: ChessConstructor, engineKind = 'stockfish', options: KnightsEyePolicyOptions = {}): KnightsEyeAnalysisPolicy {
   const native = createKnightsEyePolicyRuntime(Chess, engineKind, options.historyContext, options.preparedCaches) as unknown as Omit<KnightsEyeAnalysisPolicy, 'identity' | 'verificationSatisfies' | 'classify'> & { classify(context: AnalysisContext<MaterialExchangeState, SacrificeVerification>, verification?: SacrificeVerification): KnightsEyeDecision };

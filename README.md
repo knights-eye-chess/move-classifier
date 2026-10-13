@@ -78,7 +78,7 @@ can identify book moves; without it no Book assertion is made.
 | `@knights-eye-chess/move-classifier/engine/stockfish` | UCI adapter for a host-supplied transport. |
 | `@knights-eye-chess/move-classifier/contracts` | Result/evidence types, policy revision and recorded-decision codecs. |
 
-`@knights-eye-chess/move-classifier/compatibility` exposes the preserved policy-40 runtime factory and source strings for host compatibility generation. Hosts should use the typed policy factory for new integrations.
+`@knights-eye-chess/move-classifier/compatibility` exposes the current policy runtime factory and source strings for host compatibility generation. Hosts should use the typed policy factory for new integrations.
 
 There is no root import and no bundled engine binary, process host or browser Worker.
 See [evidence and recording contracts](docs/API.md), [core source](src/chess-analysis/analyze.ts),
@@ -88,6 +88,15 @@ Recorded decisions are for display. Restoring a record never turns it into live
 engine evidence. Your app owns legal replay on import, storage, opening data,
 engine attribution and cache invalidation. Advanced prepared-policy calls return
 policy decisions; they do not certify admitted complete analysis outcomes.
+
+## Classification policy 41
+
+A qualifying missed opportunity remains Miss unless it loses more than 20
+percentage points of expected outcome and leaves a finite numeric after-outcome
+below 0.40. That case is Blunder, retaining the opportunity diagnostic. Missing
+after-outcomes preserve Miss. The rule also applies to already-losing positions;
+existing higher-priority labels and verified-mate handling remain unchanged.
+Recorded policy-40 decisions keep their original identity and are not relabeled.
 
 ## Development
 

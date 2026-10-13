@@ -20,11 +20,11 @@ function snapshot() {
 }
 
 test('public classifier identity and scoped telemetry retain current policy and detached snapshot', () => {
-  assert.equal(CLASSIFIER_VERSION, 40);
+  assert.equal(CLASSIFIER_VERSION, 41);
   assert.equal(KNIGHTS_EYE_POLICY.revision, CLASSIFIER_VERSION);
-  assert.equal(hasCurrentClassifierVersion('40'), true);
-  assert.equal(hasCurrentClassifierVersion(39), false);
-  const raw = snapshot(), restored = scopedClassifierDecision(raw, { ...context, hostId: 'extra' }, 'great', 40);
+  assert.equal(hasCurrentClassifierVersion('41'), true);
+  assert.equal(hasCurrentClassifierVersion(40), false);
+  const raw = snapshot(), restored = scopedClassifierDecision(raw, { ...context, hostId: 'extra' }, 'great', 41);
   assert.deepEqual(restored, raw);
   raw.values.bestEp = 0;
   assert.equal(restored.values.bestEp, .7);
@@ -34,7 +34,7 @@ test('public classifier identity and scoped telemetry retain current policy and 
 test('scoped telemetry rejects stale occurrence, version, label and malformed signals', () => {
   for (const change of [
     d => d.fenBefore = 'foreign', d => d.fenAfter = 'foreign', d => d.moveUci = 'd2d4',
-    d => d.classifierVersion = 39, d => d.classification = 'best', d => d.version = 'unknown',
+    d => d.classifierVersion = 40, d => d.classification = 'best', d => d.version = 'unknown',
     d => d.flags = [], d => d.flags.onlyViable = 'yes', d => d.values.qualityLoss = Infinity,
     d => d.greatQualification.minimumUniquenessGap = .1,
     d => d.greatQualification.effectiveUniquenessGap = 0,
@@ -43,17 +43,17 @@ test('scoped telemetry rejects stale occurrence, version, label and malformed si
     d => d.authority = 'engine-proof',
   ]) {
     const raw = snapshot(); change(raw);
-    assert.equal(scopedClassifierDecision(raw, context, 'great', 40), null);
+    assert.equal(scopedClassifierDecision(raw, context, 'great', 41), null);
   }
-  assert.equal(scopedClassifierDecision(null, context, 'great', 40), null);
-  assert.equal(scopedClassifierDecision(snapshot(), context, 'great', 39), null);
+  assert.equal(scopedClassifierDecision(null, context, 'great', 41), null);
+  assert.equal(scopedClassifierDecision(snapshot(), context, 'great', 40), null);
 });
 
-test('public compatibility strings preserve exact policy-40 production bytes', () => {
+test('public compatibility strings match reviewed policy-41 source bytes', () => {
   const hashes = {
     POSITION_RULES_SOURCE: '0153742a17461e13c00de4eb887f94c87a2640c820125315dcb20457aef0acf7',
-    CLASSIFIER_RULES_SOURCE: '8c678ffb958f9f7bc822a33ab90957426c7fefdd297fec5932301745cee952f7',
-    ANALYSIS_CORE_SOURCE: '3b65c46d1f4f82591db096ad4ee085b900a2a169d3b235488a63da85d40d3c43',
+    CLASSIFIER_RULES_SOURCE: '196dc54b97c5681d03ea6a6caa0329d418eef82983028d284cfe3ada8ac87e81',
+    ANALYSIS_CORE_SOURCE: '03284361423461ce9bb58e17f864511731d6ebe1d2a52d12dd74519e169d9b99',
   };
   for (const [name, hash] of Object.entries(hashes)) {
     assert.equal(createHash('sha256').update(compatibility[name]).digest('hex'), hash, name);

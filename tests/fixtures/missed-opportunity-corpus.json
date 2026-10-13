@@ -1,0 +1,50 @@
+{
+  "description": "Recorded-signal cases for the policy-41 narrow Miss-to-Blunder override. These are not complete admitted engine evidence or PGN replay fixtures.",
+  "policyDiscussion": "https://github.com/knights-eye-chess/move-classifier/issues/3#issuecomment-6121668552",
+  "cases": [
+    {
+      "name": "65...exd4 collapses while missing a special opportunity",
+      "ply": 130,
+      "san": "exd4",
+      "source": "https://github.com/knights-eye-chess/move-classifier/issues/3",
+      "evidenceNote": "Approximate expected-outcome values reported in the issue; original PGN/FEN and search provenance unavailable.",
+      "bestEp": 0.85,
+      "afterEp": 0.0007,
+      "opportunity": "missedSpecial",
+      "expected": "blunder"
+    },
+    {
+      "name": "29...Ke7 remains a Miss above the not-bad line",
+      "ply": 58,
+      "san": "Ke7",
+      "source": "https://github.com/knights-eye-chess/move-classifier/issues/3",
+      "evidenceNote": "Approximate expected-outcome values reported in the issue; not a fresh engine replay.",
+      "bestEp": 0.7,
+      "afterEp": 0.45,
+      "opportunity": "missedSpecial",
+      "expected": "miss"
+    },
+    {
+      "name": "30.Rxh6 remains a Miss below the blunder loss threshold",
+      "ply": 59,
+      "san": "Rxh6",
+      "source": "https://github.com/knights-eye-chess/move-classifier/issues/3",
+      "evidenceNote": "Approximate expected-outcome values reported in the issue; not a fresh engine replay.",
+      "bestEp": 0.55,
+      "afterEp": 0.38,
+      "opportunity": "missedSpecial",
+      "expected": "miss"
+    },
+    {
+      "name": "21.Nd5 preserves the reviewed clean-material Miss",
+      "ply": 41,
+      "san": "Nd5",
+      "source": "knightseye-net/tests/missed-material-corpus.test.mjs: FixturePlayer001 vs FixturePlayer013",
+      "evidenceNote": "Stockfish 18 lite, depth 15, MultiPV 3 replay: +493cp to +62cp; declines 21.Rxe3 winning a bishop. Full PGN remains in the application corpus.",
+      "bestEp": 0.7638329146417003,
+      "afterEp": 0.5368378904723079,
+      "opportunity": "missedMaterialOpportunity",
+      "expected": "miss"
+    }
+  ]
+}
