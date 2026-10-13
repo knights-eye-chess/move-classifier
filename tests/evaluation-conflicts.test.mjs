@@ -223,3 +223,33 @@ test('actual checkmate and stalemate override contradictory root candidate score
     else { assert.equal(d.playedBest, false); assert.equal(d.classification, 'blunder'); }
   }
 });
+
+for (const [color, root, move] of [['White', fen, 'e5e6'], ['Black', '8/7p/8/8/4k3/8/8/K7 b - - 0 1', 'e4e3']]) {
+  for (const [band, values, after] of [
+    ['winning', [{ mate: 16 }, { cp: 4000 }, { cp: 3900 }], { cp: -4197 }],
+    ['losing', [{ cp: -4000 }, { mate: -16 }, { mate: -15 }], { cp: 4197 }],
+  ]) test(`${color}: ${band} mate/cp alternatives cannot fabricate uniqueness`, () => {
+    const p = policy(), c = context({ root, move, included: false, beforeValues: values, afterValue: after });
+    const d = p.classifyPrepared(c);
+    assert.equal(p.prepared.classificationComparison(c), null);
+    assert.ok(!['great', 'brilliant'].includes(d.classification));
+    assert.equal(d.onlyViable, false);
+    assert.equal(d.uniqueGap, Math.max(0, d.bestEp - d.secondEp));
+    assert.equal(d.bestSpecial.onlyViable, false);
+    assert.equal(d.bestSpecial.uniqueGap, d.uniqueGap);
+    assert.equal(d.bestSpecial.qualifies, false);
+    assert.equal(d.missedSpecial, false);
+  });
+  test(`${color}: genuine only-move mate still qualifies as Great`, () => {
+    const d = policy().classifyPrepared(context({ root, move, beforeValues: [{ mate: 16 }, { cp: 0 }, { cp: -100 }], afterValue: { mate: -15 } }));
+    assert.equal(d.classification, 'great');
+    assert.equal(d.onlyViable, true);
+    assert.equal(d.bestSpecial.qualifies, true);
+    assert.ok(d.uniqueGap >= .075);
+  });
+  test(`${color}: two mate scores retain existing uniqueness utility`, () => {
+    const d = policy().classifyPrepared(context({ root, move, beforeValues: [{ mate: 3 }, { mate: 16 }, { mate: 17 }], afterValue: { mate: -2 } }));
+    assert.equal(d.uniqueGap, Math.max(0, d.bestUtility - d.secondUtility));
+    assert.equal(d.onlyViable, d.uniqueGap >= .075);
+  });
+}
