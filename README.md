@@ -121,6 +121,34 @@ Great/uniqueness or replace unrestricted rankings. A failed required comparison
 returns unavailable so hosts can retain their last completed label without new UI.
 See [comparison acquisition](docs/API.md#material-evaluation-conflicts).
 
+## Classification policy 46 candidate
+
+Brilliant requires a near-best move, a real offered piece, and sound engine
+outcomes after every enumerated legal acceptance. The board check considers
+piece values, attackers and defenders, x-ray batteries, rescues and trapped
+pieces. It also permits combinations that create counter-threats. The special
+declined-recapture witness enumerates bounded legal forcing replies on the
+board and compares their restricted search outcomes with equal recaptures.
+The checking-combination witness requires a legal checking reply and an
+admitted favorable mate after acceptance. A piece already left capturable on
+the mover's previous turn uses the ordinary offer gate; if the opponent's
+last move newly attacked it, a bounded legal exchange on every immediate
+recovery square must leave a real material deficit. This attribution requires
+verified move history. See the [Brilliant policy details](docs/API.md#brilliant-policy-46-candidate).
+When the original unrestricted search ranked the move below first, an otherwise
+Brilliant move also needs one admitted, same-depth two-root comparison between
+the original best and played moves. Missing or refuting comparison evidence
+cannot award Brilliant. The service requests this only after the offer proof;
+prepared hosts use `brilliantComparison` at the same stage.
+The remaining PV material-path calculation belongs only to the legacy
+Interesting tier; it is not part of the Brilliant proof.
+
+## Acknowledgements
+
+The unsafe-piece, trapped-piece and rescue ideas are adapted from the prose
+description of [WintrChess](https://github.com/WintrCat/wintrchess). No
+WintrChess code or dependency is included; this package remains MIT.
+
 ## Development
 
 ```sh
@@ -132,6 +160,10 @@ npm run pack:checked
 Edit the source in this repository. [SOURCE-ORIGIN.json](SOURCE-ORIGIN.json) records
 its historical extraction; no application checkout is required to build it.
 The checked pack command runs the build and tests before creating an archive.
+The real-engine corpus is opt-in: set `KE_CORPUS_ENGINE` to a Stockfish JS entry
+point and run `node --test tests/brilliant-corpus.test.mjs`. The fixture metadata
+pins the browser's Hash and movetime budget with isolated fixtures;
+`KE_CORPUS_DEPTH` selects the requested depth for Lite or deeper qualification.
 
 See [npm publishing](NPM-PUBLISHING.md) for release preparation.
 

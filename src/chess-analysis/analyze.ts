@@ -44,11 +44,12 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
 ) {
   // Survives request-local policy forks; one attempt per occurrence and epoch.
   const comparisons = new Map<string, PositionAnalysis | null>();
+  const pairAttempts = new Map<string, symbol>();
   let comparisonGeneration = cache?.generation?.();
   async function run(request: { comparisonKey?: string; context: AnalysisContext<X,V>; depth: number; signal?: AbortSignal; evidence?: readonly SuppliedPositionEvidence[]; suppliedOnly?: boolean }): Promise<AnalysisOutcome<D,X,V>> {
     try {
       const cacheGeneration = cache?.generation?.();
-      if (comparisonGeneration !== cacheGeneration) { comparisons.clear(); comparisonGeneration = cacheGeneration; }
+      if (comparisonGeneration !== cacheGeneration) { comparisons.clear(); pairAttempts.clear(); comparisonGeneration = cacheGeneration; }
       const cacheCurrent = () => cacheGeneration === cache?.generation?.();
       const activeLogic = logic.fork?.() || logic;
       activeLogic.resetEvidence?.();
@@ -64,9 +65,9 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
         if (supplied.has(evidenceKey)) fail('invalid-request', 'Duplicate supplied evidence scope.');
         supplied.set(evidenceKey, item.analysis);
       }
-      async function position(fen: string, roots?: string[]): Promise<LivePosition<V>> {
+      async function position(fen: string, roots?: string[], requiredDepth?: number): Promise<LivePosition<V>> {
         check(request.signal);
-        const depth = roots ? settings.verificationDepth : request.depth;
+        const depth = roots ? (requiredDepth ?? settings.verificationDepth) : request.depth;
         const terminal = activeLogic.terminal(fen, depth);
         if (terminal && !roots) return { ...terminal, candidates: [], pv: [] } as LivePosition<V>;
         const legal = activeLogic.legalCount(fen);
@@ -151,7 +152,63 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
         check(request.signal); verification = activeLogic.verify(context, offer, verified.candidates);
         if (!verification || !activeLogic.verificationSatisfies(verification, settings.verificationDepth)) fail('verification-unavailable', 'Policy could not verify the requested continuations.');
       }
+      if (verification && activeLogic.continuationRequests && activeLogic.verifyContinuations) {
+        const scopes = activeLogic.continuationRequests(context, offer, verification);
+        const evidence = [];
+        for (const scope of scopes) {
+          if (!scope || typeof scope.fen !== 'string' || !scope.fen.trim() || !Array.isArray(scope.rootMoves) || !scope.rootMoves.length ||
+            !Number.isSafeInteger(scope.depth) || scope.depth < settings.verificationDepth || scope.depth > 128 ||
+            scope.rootMoves.some(root => !UCI.test(root)) || new Set(scope.rootMoves).size !== scope.rootMoves.length ||
+            typeof scope.acceptanceUci !== 'string' || !offer.candidates.some(candidate => candidate.uci === scope.acceptanceUci))
+            fail('invalid-request', 'Policy requested an invalid continuation scope.');
+          check(request.signal);
+          evidence.push({ request: scope, analysis: await position(scope.fen, scope.rootMoves, scope.depth) });
+        }
+        if (scopes.length) {
+          verification = activeLogic.verifyContinuations(context, offer, verification, evidence);
+          if (!verification || !activeLogic.verificationSatisfies(verification, settings.verificationDepth))
+            fail('verification-unavailable', 'Policy could not verify the declined-recapture continuations.');
+        }
+      }
       if (verification) after.sacrificeVerification = verification;
+      // A non-first move that otherwise earns Brilliant needs one coherent,
+      // same-depth comparison of the original best root with the played root.
+      // This is a separate stage from ordinary score reconciliation: its
+      // request is known only after the material acceptance proof is complete.
+      check(request.signal);
+      const neededPair = activeLogic.brilliantComparison?.(context);
+      if (neededPair) {
+        if (!cacheCurrent()) fail('cancelled', 'Brilliant comparison context expired.', neededPair);
+        if (neededPair.fen !== context.beforeFen || !Number.isSafeInteger(neededPair.depth) || neededPair.depth < 1 ||
+          neededPair.multiPv !== 2 || !Array.isArray(neededPair.rootMoves) || neededPair.rootMoves.length !== 2 ||
+          neededPair.rootMoves[0] !== before.bestmove || neededPair.rootMoves[1] !== context.move.uci ||
+          neededPair.rootMoves.some(root => !UCI.test(root)))
+          fail('invalid-request', 'Policy requested an invalid Brilliant comparison scope.');
+        const pairKey = JSON.stringify([comparisonKey, 'brilliant-pair', neededPair.depth, neededPair.rootMoves]);
+        let pair = !request.suppliedOnly ? comparisons.get(pairKey) : null;
+        if (!pair && (request.suppliedOnly || !pairAttempts.has(pairKey))) {
+          const attempt = Symbol('brilliant-pair-attempt');
+          if (!request.suppliedOnly) pairAttempts.set(pairKey, attempt);
+          try {
+            pair = await position(neededPair.fen, neededPair.rootMoves, neededPair.depth);
+            check(request.signal);
+            if (!cacheCurrent()) fail('cancelled', 'Brilliant comparison context expired.', neededPair);
+          }
+          catch (error) {
+            if (!(error instanceof AdmissionError) || error.reason === 'cancelled') {
+              if (pairAttempts.get(pairKey) === attempt) pairAttempts.delete(pairKey);
+              throw error;
+            }
+            // Missing or short pair evidence withholds optional Brilliant credit;
+            // it does not erase an otherwise complete ordinary classification.
+          }
+        }
+        const admitted = pair && activeLogic.admitClassificationComparison?.(context, neededPair, pair);
+        if (admitted) {
+          context.comparisonAnalysis = admitted;
+          if (!request.suppliedOnly) comparisons.set(pairKey, structuredClone(admitted));
+        }
+      }
       check(request.signal);
       const decision = activeLogic.classify(context);
       if (!decision || typeof decision.classification !== 'string' || !decision.classification) throw new TypeError('Policy returned an invalid classification decision.');

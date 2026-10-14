@@ -112,6 +112,127 @@ and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
 `createKnightsEyePolicyRuntime`. Applications generate historical widget strings
 from these installed exports; application source is never a fallback policy owner.
 
+## Brilliant policy 46 candidate
+
+The unsafe-piece, trapped-piece and rescue heuristics are adapted from the
+ideas in [WintrChess](https://github.com/WintrCat/wintrchess) (GPL-3.0). No
+WintrChess code or dependency is included. This implementation remains MIT.
+The board values are pawn 1, knight/bishop 3, rook 5 and queen 9. A non-pawn,
+non-king piece is unsafe when a cheaper piece attacks it, or when direct and
+compatible x-ray attackers outnumber direct and compatible x-ray defenders,
+subject to pawn/cheap-defender and defended-rook-after-minor-capture exceptions.
+The moving side's unsafe and trapped pieces are compared before and after the
+move. A quiet move that saves its unsafe moving piece is a rescue unless it
+leaves a newly unsafe, higher-value piece as the actual offer.
+This board rule also decides whether an offered piece was trapped or lost
+anyway. There is no separate depth-three forced-loss search or voluntary-offer
+cap. The captured piece's value bounds the offered stake, and every legal
+same-square recovery is considered before a static offer qualifies.
+
+Knight's Eye's own extensions allow combinations with counter-threats, use the
+best alternative move excluding the played move for the .94 already-winning
+gate, and use admitted engine evaluation for soundness. The played move must be
+near-best (at most .025 expected-points loss) and leave at least .40 expected
+points. An admitted favorable mate for the played move can bypass the .94
+alternative gate only when the covered alternative has no favorable mate
+evidence; later engine searches can still change that finding. Every
+enumerated legal offered-piece acceptance is searched at the verification depth, and the worst
+acceptance outcome must remain at or above .40 expected points. PV material
+paths, conversion gains and persistence do not enter the Brilliant proof.
+The older Interesting tier still computes its tactical payoff from the PV,
+only after its other gates pass; it is a separate policy under review.
+
+A static offer of a piece already unsafe before the played move is attributed
+to the mover's previous turn only if the exact two-ply history replays legally,
+the same piece occupied the same square after that turn, and an opponent
+capture was geometrically available then. The hypothetical capture may ignore
+check or a pin on its attacker, while a king still cannot capture onto an
+attacked square. Material is measured from before the mover's previous turn
+through that capture and every direct recapture, so an earlier gain or an equal
+trade does not create a standing offer. Moving the offered piece to a new
+square creates a new offer. When the piece was newly attacked by the opponent's
+last move, the policy enumerates the mover's legal immediate material captures
+after every offered-piece acceptance. For each capture, it settles alternating
+legal recaptures on that capture's destination square, with either side free to
+stop when another legal move exists. The mover chooses the least net material
+loss; the opponent chooses the greatest. The best settled reply must still
+leave at least the existing 120 cp deficit. The exchange tree has a 256-node
+cap per acceptance; exhaustion gives no Brilliant proof. It does not search
+quiet tactical replies and requests no additional engine analysis. All legal
+offered-piece acceptances remain in the verification scope, including those
+that settle to an equal trade, so an unsound acceptance can still refute a
+different qualifying offer. Unknown or ambiguous history cannot certify a
+pre-existing static offer. Labels can still change with engine depth or budget
+through the separate near-best and soundness gates.
+
+After acceptance and any continuation proof, a move ranked below first in the
+original unrestricted root search needs one exact best-versus-played root
+comparison before it can receive Brilliant. `brilliantComparison(context)`
+returns `null` unless all other Brilliant gates pass and that pair is not yet
+admitted; otherwise it returns `{fen, depth, multiPv:2, rootMoves:[best, played]}`.
+Depth is at least the achieved unrestricted root depth and never below an
+already admitted ordinary comparison depth. `admitClassificationComparison`
+checks the same FEN, both legal roots, complete scores/PVs, and achieved depth.
+The core service searches the pair after verification, keeps a separate
+occurrence/epoch attempt budget, and reuses an exact admitted pair. Prepared
+hosts attach the admitted result to `context.comparisonAnalysis` before final
+classification. A missing, partial, stale, or refuting pair cannot award
+Brilliant; the core still returns the ordinary completed label when only this
+optional pair is missing or short. Rank-1 moves add no pair search. The comparison cannot create a
+board offer or sound acceptance proof. A used pair marks
+`comparisonSource:'brilliant-pair'`: its `comparisonBestmove` and candidates are
+pair-local, while `beforeAnalysis.bestmove` and `playedBest` retain the
+unrestricted rank. If an ordinary three-root reconciliation was admitted first,
+the later admitted pair replaces `context.comparisonAnalysis` for the final
+decision. A move demoted from Brilliant then receives its ordinary label from
+the pair's two scores, while the original unrestricted root still owns rank
+and uniqueness.
+
+The bounded forcing extension admits a temporarily uncompensated piece offer
+when the static rule would otherwise call it trapped or rescued. A trapped
+piece's capture can qualify if a legal checking reply remains down at least
+120 cp and the acceptance search proves mate. A declined-recapture candidate
+must have an equal material-restoring recapture on the board. The policy
+enumerates **all** such recaptures and legal checks/captures that keep a deficit
+of at least 120 cp after the second ply; when checked, all legal evasions are
+considered. It searches those replies together from the exact post-acceptance
+FEN at the verification depth. A declining reply must leave at least .40
+expected points for the mover and score within .025 of the best equal
+recapture. This comparison uses scores, not the acceptance PV's chosen second
+move. Scopes above 16 roots provide no declined-recapture proof.
+
+`continuationRequests(context, offer, primaryVerification)` returns the exact
+post-acceptance `{fen, depth, rootMoves, acceptanceUci}` scopes. The scope
+depth equals the admitted primary acceptance depth. The service acquires
+and admits each restricted search. `verifyContinuations(context, offer,
+primaryVerification, evidence)` requires the full matching root set, legal
+PVs, finite scores, correct FEN provenance when supplied and achieved depth at
+least the scope depth. A prepared host must search at that depth even when its
+normal verification setting is lower; a shallower continuation cannot inherit
+the primary proof's depth.
+Prepared hosts have the same hooks but must provide genuine current live
+`PositionAnalysis` objects; recorded decisions and prior PV snippets do not
+count. A missing or incomplete continuation returns unavailable through the
+service or no Brilliant proof through a prepared host. The 16-root bound and
+real-engine corpus impact are qualification conditions for this candidate.
+The opt-in component corpus uses a single thread, 16 MiB Hash, and the
+browser full-game default of three seconds per position or restricted search.
+It clears the engine hash and position cache between independent fixtures for
+reproducibility. The browser may retain a warm engine session across jobs, so
+its exact search path can still differ.
+The recorded depth is the **achieved** depth when movetime stops a search
+early. Its 25 fixtures include short branches and are not interchangeable
+with the application's full Great-and-Brilliant acceptance inventory.
+
+Policy revision 46 invalidates saved classifications from revision 43 and
+earlier; hosts must reclassify them from current engine evidence. Its
+`SacrificeVerification` record no longer exposes the old PV material-path,
+material-thread, persistent-offer, conversion-gain, or voluntary-offer-cap
+fields. Consumers must update generated compatibility source strings and
+their hashes when adopting this runtime. The legacy Interesting payoff
+calculation remains internal to that tier. This is an API/record shape change,
+not an npm dependency on another chess classifier.
+
 ## Material evaluation conflicts
 
 Policy 42 exposes `classificationComparison(context)` both on the policy and its
@@ -133,8 +254,10 @@ finite scores and complete coverage. Admitted comparison lines carry
 `context.comparisonAnalysis` for prepared classification; before/after evidence
 must remain unchanged. The decision exposes `comparisonSource`,
 `comparisonBestmove`, `comparisonDepth` and `comparisonCandidates` for a coherent
-panel. Restricted candidates do not establish unrestricted ranking, uniqueness,
-or new Great/Brilliant credit. A strictly deeper unrestricted root containing the
+panel. Ordinary restricted comparisons do not establish unrestricted ranking,
+uniqueness, or new Great/Brilliant credit. The selective two-root pair above
+only confirms an otherwise established Brilliant offer; it never creates the
+offer or replaces the original rank. A strictly deeper unrestricted root containing the
 played move supersedes an older comparison.
 
 The acquisition service's optional policy hooks preserve behavior for other
