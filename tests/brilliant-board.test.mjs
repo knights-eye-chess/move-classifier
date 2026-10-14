@@ -515,6 +515,13 @@ test('Brilliant pair demotion rechecks Interesting proof without granting an aut
   assert.equal(failed.interestingMove, false, 'complete acceptance with no payoff must not get Interesting');
   assert.equal(failed.classification, 'okay');
 
+  const excessiveLoss = structuredClone(context);
+  excessiveLoss.comparisonAnalysis.candidates[1].scoreCp = -60;
+  const tooCostly = policy.classify(excessiveLoss);
+  assert.ok(tooCostly.qualityLoss > .05);
+  assert.equal(tooCostly.interestingMove, false, 'pair loss above Interesting ceiling must remain ordinary');
+  assert.equal(tooCostly.classification, 'dubious');
+
   const originallyOrdinary = structuredClone(context);
   originallyOrdinary.beforeAnalysis.scoreCp = 100;
   originallyOrdinary.beforeAnalysis.candidates[0].scoreCp = 100;
