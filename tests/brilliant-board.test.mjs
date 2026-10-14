@@ -400,6 +400,21 @@ test('service searches a non-first otherwise Brilliant pair once after acceptanc
   assert.deepEqual(restrictedBefore[1].rootMoves, ['f4f2', context.move.uci]);
   assert.equal(restrictedBefore[1].depth, restrictedBefore[0].depth,
     'selective pair does not override a deeper ordinary comparison with shallow evidence');
+  const demotingEngine = { capabilities: engine.capabilities, async search(request) {
+    const result = await conflictEngine.search(request);
+    if (request.fen !== context.beforeFen || request.rootMoves?.length !== 2) return result;
+    const candidates = result.candidates.map(line => ({ ...line,
+      scoreCp: line.pv[0] === 'f4f2' ? 500 : 0 }));
+    return { ...candidates[0], bestmove: candidates[0].pv[0], candidates };
+  } };
+  const demoted = await createAnalysisService(policy, demotingEngine).analyzeAndClassify({ context, depth: 15 });
+  assert.equal(demoted.status, 'complete');
+  assert.equal(demoted.decision.sacrifice, false, 'the later exact pair can refute an earlier generic Brilliant');
+  assert.equal(demoted.decision.comparisonSource, 'brilliant-pair');
+  assert.equal(demoted.decision.comparisonBestmove, 'f4f2');
+  assert.equal(demoted.decision.playedBest, false);
+  assert.ok(demoted.decision.qualityLoss > .025, 'ordinary final quality is computed from the pair scores');
+  assert.notEqual(demoted.decision.classification, 'brilliant');
   const shortCalls = [];
   const shortEngine = { capabilities: engine.capabilities, async search(request) {
     shortCalls.push(request);

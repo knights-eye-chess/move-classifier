@@ -182,7 +182,11 @@ optional pair is missing or short. Rank-1 moves add no pair search. The comparis
 board offer or sound acceptance proof. A used pair marks
 `comparisonSource:'brilliant-pair'`: its `comparisonBestmove` and candidates are
 pair-local, while `beforeAnalysis.bestmove` and `playedBest` retain the
-unrestricted rank.
+unrestricted rank. If an ordinary three-root reconciliation was admitted first,
+the later admitted pair replaces `context.comparisonAnalysis` for the final
+decision. A move demoted from Brilliant then receives its ordinary label from
+the pair's two scores, while the original unrestricted root still owns rank
+and uniqueness.
 
 The bounded forcing extension admits a temporarily uncompensated piece offer
 when the static rule would otherwise call it trapped or rescued. A trapped
