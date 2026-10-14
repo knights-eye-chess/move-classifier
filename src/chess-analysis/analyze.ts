@@ -1,4 +1,4 @@
-import type { PositionAnalysis, SearchRequest } from './stockfish-adapter';
+import type { PositionAnalysis, SearchRequest } from './analysis-types';
 import { DEFAULT_SEARCH_POLICY } from './contracts';
 import type { AnalysisContext, AnalysisEngine, AnalysisLogic, AnalysisOutcome, AnalysisPolicy, CandidateMove, ChessAnalyzerOptions, ChessConstructor, ChessMove, ClassificationDecision, ExactAnalysisRequest, LivePosition, SearchPolicy, SuppliedAnalysisRequest, SuppliedPositionEvidence, Unavailable, UnavailableReason } from './contracts';
 export * from './contracts';

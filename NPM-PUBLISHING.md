@@ -2,9 +2,9 @@
 
 The owner authorized public npm prereleases on 10 October 2026. Use **`next`** and preserve any existing `latest` tag. Licensing is documented in [LICENSING.md](LICENSING.md).
 
-The first registry prerelease is `0.1.0-dev.10`. The source checkout now prepares
-`0.1.0-dev.11` with updated consumer documentation and publication confirmation.
-This next candidate has not been published; `@next` remains the verified registry release.
+The first registry prerelease was `0.1.0-dev.10`. This checkout prepares the
+local `0.1.0-dev.15` candidate with the separate UCI client boundary. This
+candidate has not been published; check the registry before relying on `@next`.
 
 ## Prepare the exact candidate
 
@@ -15,7 +15,7 @@ npm ci
 npm run publish:prepare
 ```
 
-Review `artifacts/knights-eye-chess-move-classifier-0.1.0-dev.11.tgz`, including its files, exports, declarations, licenses and exact registry dependencies. Reusable source and offline owner tests are intentional; application traces, credentials, vendor archives and source lockfiles are excluded. The checkout stays `private: true`; publish only the staged archive. Archive contents are immutable: use a new version for changed bytes.
+Review `artifacts/knights-eye-chess-move-classifier-0.1.0-dev.15.tgz`, including its files, exports, declarations, licenses and exact registry dependencies. Reusable source and offline owner tests are intentional; application traces, credentials, vendor archives and source lockfiles are excluded. The checkout stays `private: true`; publish only the staged archive. Archive contents are immutable: use a new version for changed bytes.
 
 Before every coordinated release, run `node tools/release-tooling/sync.mjs --check` in the reviewed app checkout alongside all six component revisions. Record those commits and the result.
 

@@ -1,5 +1,5 @@
-import { createChessAnalyzerCore, type AnalysisEngine, type AnalysisPolicy } from '@knights-eye-chess/move-classifier/core';
-import { type SearchRequest, type PositionAnalysis } from '@knights-eye-chess/move-classifier/engine/stockfish';
+import { createChessAnalyzerCore, type AnalysisEngine, type AnalysisPolicy,
+  type SearchRequest, type PositionAnalysis } from '@knights-eye-chess/move-classifier/core';
 import { Chess } from 'chess.js';
 const engine: AnalysisEngine = { search: async (_request: SearchRequest): Promise<PositionAnalysis> => { throw new Error('type-only consumer'); } };
 declare const policy: AnalysisPolicy;
