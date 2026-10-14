@@ -1,0 +1,19 @@
+{
+  "schema": "knights-eye-local-candidate/1",
+  "name": "@knights-eye-chess/move-classifier",
+  "version": "0.1.0-dev.15",
+  "sourceCommitBeforeReleaseMetadata": "510fff4eb968200636a8b370b9557f7c4106d667",
+  "archive": "artifacts/knights-eye-chess-move-classifier-0.1.0-dev.15.tgz",
+  "bytes": 112900,
+  "sha256": "3daadd13d38031e3898e1a4159fc629e4efc2c2a62231cbb3b5d230236172d4f",
+  "registryDependencies": {},
+  "checks": {
+    "npmCi": "passed with Node 24.19.0 and npm 11.9.0",
+    "sourceBuildAndTests": { "passed": 78, "failed": 0 },
+    "packedConsumerInstallAndTests": { "passed": 78, "failed": 0 },
+    "packedConsumerImport": "core, policy and contracts imports passed; missing evidence returned unavailable",
+    "archiveExportsAndNpmPublishDryRun": "passed; 53 files; registry write false"
+  },
+  "publicationPerformed": false,
+  "limitations": "Offline source and installed-package checks; no real engine corpus, website deployment or npm publication. Historical qualification and archives were left unchanged."
+}

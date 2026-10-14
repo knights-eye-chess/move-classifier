@@ -26,8 +26,8 @@ in this example:
 npm install @knights-eye-chess/move-classifier@next chess.js@1.4.0
 ```
 
-The `next` tag currently resolves to `0.1.0-dev.10`; pin that exact version for a
-reproducible install. The policy and API remain preview contracts. For source
+Pin the resolved exact version for a reproducible install. The policy and API
+remain preview contracts. For source
 development, use the commands below; [SOURCE-ORIGIN.json](SOURCE-ORIGIN.json)
 records historical archive provenance.
 
