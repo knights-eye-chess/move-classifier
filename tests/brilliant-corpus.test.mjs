@@ -113,6 +113,7 @@ async function classifyFixture(fixture, engine, cache) {
   const sets = { brilliant: [], interesting: [], great: [] };
   const diagnostics = [];
   let continuationSearches = 0, continuationRoots = 0, continuationMs = 0;
+  let brilliantPairSearches = 0, brilliantPairMs = 0;
   let previousExchange = null;
   const position = async fen => {
     const terminal = policy.terminal(fen, depth);
@@ -155,6 +156,17 @@ async function classifyFixture(fixture, engine, cache) {
       }
       if (proof) context.afterAnalysis = { ...context.afterAnalysis, sacrificeVerification: proof };
     }
+    const pairRequest = policy.brilliantComparison(context);
+    if (pairRequest) {
+      brilliantPairSearches++;
+      const started = performance.now();
+      const comparison = await engine.analyze(pairRequest.fen, pairRequest.depth, pairRequest.rootMoves, true);
+      brilliantPairMs += performance.now() - started;
+      if (comparison.depth >= pairRequest.depth) {
+        const admitted = policy.admitClassificationComparison(context, pairRequest, comparison);
+        if (admitted) context.comparisonAnalysis = admitted;
+      }
+    }
     const decision = policy.classify(context);
     const key = `${index + 1}:${move.san}`;
     if (sets[decision.classification]) sets[decision.classification].push(key);
@@ -177,7 +189,7 @@ async function classifyFixture(fixture, engine, cache) {
         ep: decision.afterEp, qualityLoss: decision.qualityLoss });
     }
   }
-  return { sets, diagnostics, continuationSearches, continuationRoots, continuationMs };
+  return { sets, diagnostics, continuationSearches, continuationRoots, continuationMs, brilliantPairSearches, brilliantPairMs };
 }
 
 const fixtures = [...fixtureData.fixtures, ...fixtureData.interestingFixtures, ...fixtureData.addedFixtures, fixtureData.nc5SingleMoveFixture];
@@ -201,6 +213,7 @@ test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interest
       const result = await classifyFixture(fixture, engine, new Map());
       console.log(`[fixture labels] ${JSON.stringify({ fixture: fixture.name, sets: result.sets, diagnostics: result.diagnostics })}`);
       if (result.continuationSearches) console.log(`[continuations] ${fixture.name}: ${result.continuationSearches} searches, ${result.continuationRoots} roots, ${Math.round(result.continuationMs)} ms`);
+      if (result.brilliantPairSearches) console.log(`[brilliant pairs] ${fixture.name}: ${result.brilliantPairSearches} searches, ${Math.round(result.brilliantPairMs)} ms`);
       const variants = fixture.expectedSpecialVariants || [{ brilliant: fixture.expected || [], interesting: fixture.expectedInteresting || [] }];
       const actual = { brilliant: result.sets.brilliant, interesting: result.sets.interesting };
       const compare = fixture.brilliantOnly || fixture.name.startsWith('Owner game ') || fixture.name.startsWith('Either-way ')

@@ -36,6 +36,8 @@ export type AnalysisLogic<D extends ClassificationDecision = ClassificationDecis
   verifyContinuations?(context: AnalysisContext<X, V>, state: VerificationState<V, C>, verification: V, evidence: readonly ContinuationEvidence[]): V | null;
   verificationSatisfies(verification: V, depth: number): boolean;
   classificationComparison?(context: AnalysisContext<X, V>): ClassificationComparisonRequest | null;
+  /** After offer verification, request an exact best-versus-played pair for an otherwise Brilliant non-first move. */
+  brilliantComparison?(context: AnalysisContext<X, V>): ClassificationComparisonRequest | null;
   admitClassificationComparison?(context: AnalysisContext<X, V>, request: ClassificationComparisonRequest, result: PositionAnalysis): PositionAnalysis | null;
   classify(context: AnalysisContext<X, V>): D;
   priorPoints(position: PositionAnalysis): number;

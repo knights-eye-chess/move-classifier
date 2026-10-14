@@ -290,6 +290,160 @@ test('already-winning alternative is blocked unless played-line mate alone is ev
   assert.equal(reconciled.sacrifice, false, 'reconciliation can remove stale Brilliant credit');
 });
 
+test('non-first Brilliant needs an admitted same-depth best-versus-played pair', () => {
+  const base = fixtureMove('Owner game B 22.Re1 offer', 43);
+  const state = policy.offer(base, {}, '');
+  const proof = policy.verify(base, state, [{ depth: 10, scoreCp: -100, mate: null, pv: ['b6c5'] }]);
+  assert.ok(proof.qualifyingMaterialOffer >= 120);
+  const line = (uci, cp, depth = 15, multipv = 1) => ({ multipv, depth, scoreCp: cp, mate: null, pv: [uci] });
+  const best = line('f4f2', 50), played = line(base.move.uci, 40, 15, 2);
+  const context = { ...base,
+    beforeAnalysis: { ...best, bestmove: best.pv[0], depth: 15, candidates: [best, played] },
+    afterAnalysis: { depth: 15, scoreCp: -40, mate: null, candidates: [], sacrificeVerification: proof } };
+  const request = policy.prepared.brilliantComparison(context);
+  assert.deepEqual(request, { fen: base.beforeFen, depth: 15, multiPv: 2, rootMoves: ['f4f2', base.move.uci] });
+  assert.equal(policy.classify(context).sacrifice, false, 'a generic root score cannot substitute for the pair proof');
+  const pair = { ...best, bestmove: best.pv[0], candidates: [best, played] };
+  context.comparisonAnalysis = policy.prepared.admitClassificationComparison(context, request, pair);
+  assert.ok(context.comparisonAnalysis);
+  assert.equal(policy.prepared.brilliantComparison(context), null, 'an exact admitted pair is reused');
+  assert.equal(policy.classify(context).sacrifice, true);
+  const promoted = line(base.move.uci, 50), other = line('f4f2', 40, 15, 2);
+  const pairBestPlayed = { ...promoted, bestmove: base.move.uci, candidates: [promoted, other] };
+  const pairedPromotion = { ...context,
+    comparisonAnalysis: policy.prepared.admitClassificationComparison(context, request, pairBestPlayed) };
+  assert.equal(policy.classify(pairedPromotion).sacrifice, true);
+  assert.equal(policy.classify(pairedPromotion).playedBest, false,
+    'restricted pair ranking cannot turn original unrestricted rank two into Best');
+  assert.equal(policy.classify(pairedPromotion).comparisonSource, 'brilliant-pair');
+  assert.equal(policy.classify(pairedPromotion).comparisonBestmove, base.move.uci,
+    'pair-local best is identified separately from the unrestricted best in beforeAnalysis');
+
+  const stale = { ...context, comparisonAnalysis: { ...pair, depth: 14, candidates: pair.candidates.map(line => ({ ...line, depth: 14 })) } };
+  assert.deepEqual(policy.prepared.brilliantComparison(stale), request);
+  assert.equal(policy.classify(stale).sacrifice, false);
+  const partial = { ...context, comparisonAnalysis: { ...pair, candidates: [best] } };
+  assert.deepEqual(policy.prepared.brilliantComparison(partial), request);
+  assert.equal(policy.classify(partial).sacrifice, false);
+  const wrongRoot = { ...context, comparisonAnalysis: { ...pair, candidates: [best, line('a2a3', 40, 15, 2)] } };
+  assert.deepEqual(policy.prepared.brilliantComparison(wrongRoot), request);
+  assert.equal(policy.classify(wrongRoot).sacrifice, false);
+  const losing = { ...context, comparisonAnalysis: policy.prepared.admitClassificationComparison(context, request,
+    { ...best, bestmove: best.pv[0], candidates: [best, line(base.move.uci, -250, 15, 2)] }) };
+  assert.equal(policy.prepared.brilliantComparison(losing), null, 'a complete refuting pair needs no further search');
+  assert.equal(policy.classify(losing).sacrifice, false);
+  const rankOne = { ...context, beforeAnalysis: { ...played, bestmove: base.move.uci,
+    candidates: [line(base.move.uci, 40), line('f4f2', 30, 15, 2)] }, comparisonAnalysis: undefined };
+  assert.equal(policy.prepared.brilliantComparison(rankOne), null);
+  assert.equal(policy.classify(rankOne).sacrifice, true);
+});
+
+test('service searches a non-first otherwise Brilliant pair once after acceptance proof', async () => {
+  const context = fixtureMove('Owner game B 22.Re1 offer', 43), calls = [], results = [];
+  const engine = { capabilities: { multiPv: true, rootMoves: true }, async search(request) {
+    calls.push(request);
+    let roots, scores;
+    if (request.fen === context.beforeFen) {
+      roots = request.rootMoves || ['f4f2', context.move.uci, 'b3c2'];
+      scores = roots.map(uci => uci === 'f4f2' ? 50 : uci === context.move.uci ? 40 : 0);
+    } else if (request.fen === context.afterFen && request.rootMoves) {
+      roots = request.rootMoves; scores = roots.map(() => -100);
+    } else {
+      roots = new Chess(request.fen).moves({ verbose: true }).slice(0, request.multiPv).map(move => move.lan);
+      scores = roots.map(() => request.fen === context.afterFen ? -40 : 0);
+    }
+    const candidates = roots.map((uci, index) => ({ multipv: index + 1, depth: request.depth, scoreCp: scores[index], mate: null, pv: [uci] }));
+    const result = { ...candidates[0], bestmove: roots[0], candidates };
+    results.push({ request, result });
+    return result;
+  } };
+  const service = createAnalysisService(policy, engine, undefined, { legalPv: (fen, pv) => {
+    const board = new Chess(fen); return pv.every(uci => !!board.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }));
+  } });
+  const result = await service.analyzeAndClassify({ context, depth: 15 });
+  assert.equal(result.status, 'complete');
+  assert.equal(result.decision.classification, 'brilliant');
+  const pairs = calls.filter(request => request.fen === context.beforeFen && request.rootMoves);
+  assert.deepEqual(pairs.map(request => request.rootMoves), [['f4f2', context.move.uci]]);
+  assert.equal(pairs[0].depth, 15);
+  const again = await service.analyzeAndClassify({ context, depth: 15 });
+  assert.equal(again.status, 'complete');
+  assert.equal(calls.filter(request => request.fen === context.beforeFen && request.rootMoves).length, 1,
+    'the admitted exact pair is reused for the same occurrence and evidence epoch');
+  const supplied = [...new Map(results.filter(item => item.request.fen !== context.beforeFen || !item.request.rootMoves)
+    .map(item => [JSON.stringify([item.request.fen, item.request.rootMoves || null]), item])).values()]
+    .map(item => ({ kind: 'live-position', fen: item.request.fen,
+      ...(item.request.rootMoves ? { rootMoves: item.request.rootMoves } : {}), analysis: item.result }));
+  const suppliedService = createAnalysisService(policy, undefined);
+  const missing = await suppliedService.analyzeAndClassify({ context, depth: 15, suppliedOnly: true, evidence: supplied });
+  assert.equal(missing.status, 'complete');
+  assert.equal(missing.decision.sacrifice, false, 'missing optional pair keeps the ordinary classification available');
+  const pair = results.find(item => item.request.fen === context.beforeFen && item.request.rootMoves);
+  supplied.push({ kind: 'live-position', fen: pair.request.fen, rootMoves: pair.request.rootMoves, analysis: pair.result });
+  const complete = await suppliedService.analyzeAndClassify({ context, depth: 15, suppliedOnly: true, evidence: supplied });
+  assert.equal(complete.status, 'complete');
+  assert.equal(complete.decision.classification, 'brilliant');
+  const conflictCalls = [];
+  const conflictEngine = { capabilities: engine.capabilities, async search(request) {
+    conflictCalls.push(request);
+    const result = await engine.search(request);
+    if (request.fen !== context.afterFen || request.rootMoves) return result;
+    const candidates = result.candidates.map(line => ({ ...line, scoreCp: -500 }));
+    return { ...candidates[0], bestmove: candidates[0].pv[0], candidates };
+  } };
+  const reconciled = await createAnalysisService(policy, conflictEngine).analyzeAndClassify({ context, depth: 15 });
+  assert.equal(reconciled.status, 'complete');
+  assert.equal(reconciled.decision.classification, 'brilliant');
+  const restrictedBefore = conflictCalls.filter(request => request.fen === context.beforeFen && request.rootMoves);
+  assert.equal(restrictedBefore.length, 2, 'ordinary three-root reconciliation and selective pair have separate stages');
+  assert.equal(restrictedBefore[0].rootMoves.length, 3);
+  assert.deepEqual(restrictedBefore[1].rootMoves, ['f4f2', context.move.uci]);
+  assert.equal(restrictedBefore[1].depth, restrictedBefore[0].depth,
+    'selective pair does not override a deeper ordinary comparison with shallow evidence');
+  const shortCalls = [];
+  const shortEngine = { capabilities: engine.capabilities, async search(request) {
+    shortCalls.push(request);
+    const result = await engine.search(request);
+    if (request.fen !== context.beforeFen || !request.rootMoves) return result;
+    const candidates = result.candidates.map(line => ({ ...line, depth: request.depth - 1 }));
+    return { ...candidates[0], depth: request.depth - 1, bestmove: candidates[0].pv[0], candidates };
+  } };
+  const shortService = createAnalysisService(policy, shortEngine);
+  for (let repeat = 0; repeat < 2; repeat++) {
+    const outcome = await shortService.analyzeAndClassify({ context, depth: 15 });
+    assert.equal(outcome.status, 'complete');
+    assert.equal(outcome.decision.sacrifice, false);
+  }
+  assert.equal(shortCalls.filter(request => request.fen === context.beforeFen && request.rootMoves).length, 1,
+    'an under-depth pair fails closed without a new search loop');
+  for (const mode of ['cancel', 'epoch']) {
+    let epoch = 0, started, release, paused = true, pairSearches = 0;
+    const atPair = new Promise(resolve => { started = resolve; });
+    const gate = new Promise(resolve => { release = resolve; });
+    const gatedEngine = { capabilities: engine.capabilities, async search(request) {
+      if (request.fen === context.beforeFen && request.rootMoves) {
+        pairSearches++;
+        if (paused) { started(); await gate; paused = false; }
+      }
+      return engine.search(request);
+    } };
+    const gatedService = createAnalysisService(policy, gatedEngine,
+      { get: () => null, put: () => {}, generation: () => epoch });
+    const controller = new AbortController();
+    const pending = gatedService.analyzeAndClassify({ context, depth: 15, signal: controller.signal });
+    await atPair;
+    if (mode === 'cancel') controller.abort(); else epoch++;
+    release();
+    const expired = await pending;
+    assert.equal(expired.status, 'unavailable');
+    assert.equal(expired.reason, 'cancelled');
+    const retried = await gatedService.analyzeAndClassify({ context, depth: 15 });
+    assert.equal(retried.status, 'complete');
+    assert.equal(retried.decision.classification, 'brilliant');
+    assert.equal(pairSearches, 2, `${mode} must not retain an in-flight pair attempt marker`);
+  }
+});
+
 test('explicit selected verification is scoped to one native classification call', () => {
   const native = createKnightsEyePolicyRuntime(Chess);
   const context = fixtureMove('Owner game B 22.Re1 offer', 43);

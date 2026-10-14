@@ -53,7 +53,7 @@ test('public compatibility strings match reviewed policy-46 source bytes', () =>
   const hashes = {
     POSITION_RULES_SOURCE: '0153742a17461e13c00de4eb887f94c87a2640c820125315dcb20457aef0acf7',
     CLASSIFIER_RULES_SOURCE: '53eb2fbfe6e4f1ab8b334e1d285d7e4a7b031c75a768e5859396baaa6a7af09f',
-    ANALYSIS_CORE_SOURCE: 'a55f63ffadc605527519bb523aa94708f59a93a732f51cb3831c03a7922fa192',
+    ANALYSIS_CORE_SOURCE: 'd5cf1e376731230de226fbc4dc7a2d0014c10d99ff6c225387014efa5cea734c',
   };
   for (const [name, hash] of Object.entries(hashes)) {
     assert.equal(createHash('sha256').update(compatibility[name]).digest('hex'), hash, name);

@@ -165,6 +165,25 @@ different qualifying offer. Unknown or ambiguous history cannot certify a
 pre-existing static offer. Labels can still change with engine depth or budget
 through the separate near-best and soundness gates.
 
+After acceptance and any continuation proof, a move ranked below first in the
+original unrestricted root search needs one exact best-versus-played root
+comparison before it can receive Brilliant. `brilliantComparison(context)`
+returns `null` unless all other Brilliant gates pass and that pair is not yet
+admitted; otherwise it returns `{fen, depth, multiPv:2, rootMoves:[best, played]}`.
+Depth is at least the achieved unrestricted root depth and never below an
+already admitted ordinary comparison depth. `admitClassificationComparison`
+checks the same FEN, both legal roots, complete scores/PVs, and achieved depth.
+The core service searches the pair after verification, keeps a separate
+occurrence/epoch attempt budget, and reuses an exact admitted pair. Prepared
+hosts attach the admitted result to `context.comparisonAnalysis` before final
+classification. A missing, partial, stale, or refuting pair cannot award
+Brilliant; the core still returns the ordinary completed label when only this
+optional pair is missing or short. Rank-1 moves add no pair search. The comparison cannot create a
+board offer or sound acceptance proof. A used pair marks
+`comparisonSource:'brilliant-pair'`: its `comparisonBestmove` and candidates are
+pair-local, while `beforeAnalysis.bestmove` and `playedBest` retain the
+unrestricted rank.
+
 The bounded forcing extension admits a temporarily uncompensated piece offer
 when the static rule would otherwise call it trapped or rescued. A trapped
 piece's capture can qualify if a legal checking reply remains down at least
@@ -201,6 +220,15 @@ The recorded depth is the **achieved** depth when movetime stops a search
 early. Its 25 fixtures include short branches and are not interchangeable
 with the application's full Great-and-Brilliant acceptance inventory.
 
+Policy revision 46 invalidates saved classifications from revision 43 and
+earlier; hosts must reclassify them from current engine evidence. Its
+`SacrificeVerification` record no longer exposes the old PV material-path,
+material-thread, persistent-offer, conversion-gain, or voluntary-offer-cap
+fields. Consumers must update generated compatibility source strings and
+their hashes when adopting this runtime. The legacy Interesting payoff
+calculation remains internal to that tier. This is an API/record shape change,
+not an npm dependency on another chess classifier.
+
 ## Material evaluation conflicts
 
 Policy 42 exposes `classificationComparison(context)` both on the policy and its
@@ -222,8 +250,10 @@ finite scores and complete coverage. Admitted comparison lines carry
 `context.comparisonAnalysis` for prepared classification; before/after evidence
 must remain unchanged. The decision exposes `comparisonSource`,
 `comparisonBestmove`, `comparisonDepth` and `comparisonCandidates` for a coherent
-panel. Restricted candidates do not establish unrestricted ranking, uniqueness,
-or new Great/Brilliant credit. A strictly deeper unrestricted root containing the
+panel. Ordinary restricted comparisons do not establish unrestricted ranking,
+uniqueness, or new Great/Brilliant credit. The selective two-root pair above
+only confirms an otherwise established Brilliant offer; it never creates the
+offer or replaces the original rank. A strictly deeper unrestricted root containing the
 played move supersedes an older comparison.
 
 The acquisition service's optional policy hooks preserve behavior for other

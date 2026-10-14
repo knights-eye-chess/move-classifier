@@ -135,6 +135,11 @@ the mover's previous turn uses the ordinary offer gate; if the opponent's
 last move newly attacked it, a bounded legal exchange on every immediate
 recovery square must leave a real material deficit. This attribution requires
 verified move history. See the [Brilliant policy details](docs/API.md#brilliant-policy-46-candidate).
+When the original unrestricted search ranked the move below first, an otherwise
+Brilliant move also needs one admitted, same-depth two-root comparison between
+the original best and played moves. Missing or refuting comparison evidence
+cannot award Brilliant. The service requests this only after the offer proof;
+prepared hosts use `brilliantComparison` at the same stage.
 The remaining PV material-path calculation belongs only to the legacy
 Interesting tier; it is not part of the Brilliant proof.
 

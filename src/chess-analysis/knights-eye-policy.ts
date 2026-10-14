@@ -66,7 +66,7 @@ export type PreparedEngineLine = Omit<EngineLine, 'multipv' | 'scoreProvenance'>
 export type KnightsEyeLabel = 'brilliant' | 'great' | 'best' | 'good' | 'okay' | 'dubious' | 'mistake' | 'miss' | 'blunder' | 'book' | 'forced' | 'interesting';
 export type KnightsEyeDecision = ClassificationDecision & {
   classification: KnightsEyeLabel;
-  comparisonSource: 'root-candidate' | 'after-position' | 'comparison-root' | 'checkmate' | 'terminal-position';
+  comparisonSource: 'root-candidate' | 'after-position' | 'comparison-root' | 'brilliant-pair' | 'checkmate' | 'terminal-position';
   comparisonBestmove: string; comparisonDepth: number; comparisonCandidates: PreparedEngineLine[] | null;
   beforeCp: number; afterForMover: number; loss: number; bestEp: number; afterEp: number;
   epLoss: number; qualityLoss: number; bestUtility: number; playedUtility: number;
@@ -117,6 +117,7 @@ export type RecordedClassificationSignals = Pick<KnightsEyeDecision,
 };
 export type KnightsEyePreparedOperations = {
   classificationComparison(context: PreparedAnalysisContext): ClassificationComparisonRequest | null;
+  brilliantComparison(context: PreparedAnalysisContext): ClassificationComparisonRequest | null;
   admitClassificationComparison(context: PreparedAnalysisContext, request: ClassificationComparisonRequest, result: PositionAnalysis): PositionAnalysis | null;
   classifyRecordedSignals(signals: RecordedClassificationSignals): KnightsEyeLabel;
   numericScore(position?: Pick<PreparedPosition, 'scoreCp' | 'mate'> | null): number;

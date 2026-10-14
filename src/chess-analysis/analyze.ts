@@ -44,11 +44,12 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
 ) {
   // Survives request-local policy forks; one attempt per occurrence and epoch.
   const comparisons = new Map<string, PositionAnalysis | null>();
+  const pairAttempts = new Map<string, symbol>();
   let comparisonGeneration = cache?.generation?.();
   async function run(request: { comparisonKey?: string; context: AnalysisContext<X,V>; depth: number; signal?: AbortSignal; evidence?: readonly SuppliedPositionEvidence[]; suppliedOnly?: boolean }): Promise<AnalysisOutcome<D,X,V>> {
     try {
       const cacheGeneration = cache?.generation?.();
-      if (comparisonGeneration !== cacheGeneration) { comparisons.clear(); comparisonGeneration = cacheGeneration; }
+      if (comparisonGeneration !== cacheGeneration) { comparisons.clear(); pairAttempts.clear(); comparisonGeneration = cacheGeneration; }
       const cacheCurrent = () => cacheGeneration === cache?.generation?.();
       const activeLogic = logic.fork?.() || logic;
       activeLogic.resetEvidence?.();
@@ -170,6 +171,44 @@ export function createAnalysisService<D extends ClassificationDecision, X, V, C 
         }
       }
       if (verification) after.sacrificeVerification = verification;
+      // A non-first move that otherwise earns Brilliant needs one coherent,
+      // same-depth comparison of the original best root with the played root.
+      // This is a separate stage from ordinary score reconciliation: its
+      // request is known only after the material acceptance proof is complete.
+      check(request.signal);
+      const neededPair = activeLogic.brilliantComparison?.(context);
+      if (neededPair) {
+        if (!cacheCurrent()) fail('cancelled', 'Brilliant comparison context expired.', neededPair);
+        if (neededPair.fen !== context.beforeFen || !Number.isSafeInteger(neededPair.depth) || neededPair.depth < 1 ||
+          neededPair.multiPv !== 2 || !Array.isArray(neededPair.rootMoves) || neededPair.rootMoves.length !== 2 ||
+          neededPair.rootMoves[0] !== before.bestmove || neededPair.rootMoves[1] !== context.move.uci ||
+          neededPair.rootMoves.some(root => !UCI.test(root)))
+          fail('invalid-request', 'Policy requested an invalid Brilliant comparison scope.');
+        const pairKey = JSON.stringify([comparisonKey, 'brilliant-pair', neededPair.depth, neededPair.rootMoves]);
+        let pair = !request.suppliedOnly ? comparisons.get(pairKey) : null;
+        if (!pair && (request.suppliedOnly || !pairAttempts.has(pairKey))) {
+          const attempt = Symbol('brilliant-pair-attempt');
+          if (!request.suppliedOnly) pairAttempts.set(pairKey, attempt);
+          try {
+            pair = await position(neededPair.fen, neededPair.rootMoves, neededPair.depth);
+            check(request.signal);
+            if (!cacheCurrent()) fail('cancelled', 'Brilliant comparison context expired.', neededPair);
+          }
+          catch (error) {
+            if (!(error instanceof AdmissionError) || error.reason === 'cancelled') {
+              if (pairAttempts.get(pairKey) === attempt) pairAttempts.delete(pairKey);
+              throw error;
+            }
+            // Missing or short pair evidence withholds optional Brilliant credit;
+            // it does not erase an otherwise complete ordinary classification.
+          }
+        }
+        const admitted = pair && activeLogic.admitClassificationComparison?.(context, neededPair, pair);
+        if (admitted) {
+          context.comparisonAnalysis = admitted;
+          if (!request.suppliedOnly) comparisons.set(pairKey, structuredClone(admitted));
+        }
+      }
       check(request.signal);
       const decision = activeLogic.classify(context);
       if (!decision || typeof decision.classification !== 'string' || !decision.classification) throw new TypeError('Policy returned an invalid classification decision.');
