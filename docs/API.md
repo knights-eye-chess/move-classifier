@@ -47,6 +47,39 @@ Opening lookup receives `{startFen, history, afterFen}` and may support custom
 roots. Explicit `book` overrides bypass it. No lookup means no book assertion.
 The application adapter alone retains the standard-start default book restriction.
 
+### UCI client migration
+
+This prerelease removes the classifier's `/engine/stockfish` runtime export.
+`EngineLine`, `PositionAnalysis` and `SearchRequest` are now classifier-owned
+structural types available from `/core` and `/contracts`. The classifier does
+not import an engine package, including for types. Older published prereleases
+retain their original adapter; their archives are unchanged.
+
+Hosts using `createStockfishAdapter` can inject the separate UCI client's Node
+host through this boundary:
+
+```js
+import { createChessAnalyzerCore } from '@knights-eye-chess/move-classifier/core';
+import { createProcessEngine } from '@knights-eye-chess/uci-client/node';
+
+const client = createProcessEngine({ command: 'stockfish' });
+const engine = {
+  capabilities: { multiPv: true, rootMoves: true },
+  search({ depth, ...request }) {
+    return client.search({ ...request, limit: { depth } });
+  },
+};
+const analyzer = createChessAnalyzerCore(Chess, engine, policy);
+// Close the client when the host's analysis job ends: await client.close().
+```
+
+`Chess` and `policy` are host-supplied in this example. The classifier still
+requests depth-shaped finite evidence and checks achieved depth, legal PVs,
+scores, provenance and candidate coverage. The UCI client owns protocol and
+process behavior. Browser hosts supply their own transport through its root
+export and use the same request translation. Expose capability flags that the
+configured engine actually supports; unsupported evidence returns unavailable.
+
 ## Recording is optional and host-owned
 
 Package semver, policy `{id,revision}`, record schema `classifier-decision/1`,
@@ -129,9 +162,37 @@ The caller owns its engine/generation scope and must never populate this field
 from recorded display data; attribution has the same trust limits as other live
 supplied evidence. Supplied-only replay still requires explicit scoped envelopes.
 
-### Completed Stockfish MultiPV searches
+## Adding a policy
 
-For unrestricted searches, MultiPV is an upper bound. On `bestmove`, the adapter
+An external policy is an `AnalysisPolicy` supplied to
+`createChessAnalyzerCore(Chess, engine, policy)`. It is plain host code: import
+the public `/core` types and entry point, and keep third-party classifier source
+and licenses in the composition that uses them. The policy implements chess
+callbacks (`terminal`, `legalCount`, `materialExchangeForMove`, `exchange`),
+candidate and verification callbacks (`offer`, `verify`,
+`verificationSatisfies`), and `classify` and `priorPoints`. The
+`AnalysisPolicy` declaration in `/core` is the complete contract. Adapt the
+third-party library's inputs and output in those callbacks; its decision only
+needs a `classification` string unless the host chooses a richer decision type.
+
+Give the policy a stable `identity: { id, revision }` that changes when the
+policy implementation or its pinned upstream version changes. Record and cache
+decisions under that identity. Use separate decision caches when comparing two
+policies, and attribute any policy-specific extra searches to that policy.
+Position evidence can be reused only when its exact FEN, search settings,
+engine build and weights identity are appropriate for both calls. Stored
+decisions never become live position evidence. The host may invoke the same
+replay core with two separately configured policies to print side-by-side
+results, while the shared UCI client provides the common searches.
+
+For a pinned external implementation such as WintrChess, compile its original
+source in the example and keep the adapter small. `move-classifier` has no
+WintrChess import or GPL dependency. The composition owns its corresponding
+license notice and test corpus.
+
+## Completed UCI MultiPV searches
+
+For unrestricted searches, MultiPV is an upper bound. On `bestmove`, the UCI client
 accepts the nonempty returned candidate set even when it contains fewer lines
 than requested. It retains achieved-depth, score, distinct-root and bestmove
 checks. Explicit `searchmoves` requests still require every requested root.

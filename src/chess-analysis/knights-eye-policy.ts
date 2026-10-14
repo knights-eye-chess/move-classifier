@@ -1,7 +1,7 @@
 import { createKnightsEyePolicyRuntime, CLASSIFIER_VERSION } from './knights-eye-policy-runtime.js';
 import type { AnalysisContext, ClassificationComparisonRequest, AnalysisPolicy, ChessConstructor, ChessMove, ClassificationDecision, VerificationState } from './contracts';
 import type { PolicyIdentity } from './recorded-decision';
-import type { EngineLine, PositionAnalysis } from './stockfish-adapter';
+import type { EngineLine, PositionAnalysis } from './analysis-types';
 
 export const KNIGHTS_EYE_POLICY: PolicyIdentity = Object.freeze({ id: 'knights-eye/move-quality', revision: CLASSIFIER_VERSION });
 export type MaterialExchangeState = {

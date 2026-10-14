@@ -27,10 +27,6 @@
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
     },
-    "./engine/stockfish": {
-      "types": "./dist/stockfish.d.ts",
-      "import": "./dist/stockfish.js"
-    },
     "./contracts": {
       "types": "./dist/recorded-decision.d.ts",
       "import": "./dist/recorded-decision.js"

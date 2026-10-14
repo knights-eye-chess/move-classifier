@@ -6,7 +6,7 @@ decision with its policy identity and reasons.
 
 Use it in analysis apps, annotated game viewers or chess tooling. The library has
 **zero runtime npm dependencies**: you supply a compatible chess implementation
-and, when you want engine analysis, an engine port.
+and, when you want engine analysis, an object that satisfies `AnalysisEngine`.
 
 ## What you can build
 
@@ -75,14 +75,21 @@ can identify book moves; without it no Book assertion is made.
 | --- | --- |
 | `@knights-eye-chess/move-classifier/core` | Replay-based core, supplied-evidence classification and low-level analysis service. |
 | `@knights-eye-chess/move-classifier/policy/knights-eye` | Native Knight's Eye policy and its types. |
-| `@knights-eye-chess/move-classifier/engine/stockfish` | UCI adapter for a host-supplied transport. |
 | `@knights-eye-chess/move-classifier/contracts` | Result/evidence types, policy revision and recorded-decision codecs. |
 
 `@knights-eye-chess/move-classifier/compatibility` exposes the current policy runtime factory and source strings for host compatibility generation. Hosts should use the typed policy factory for new integrations.
 
-There is no root import and no bundled engine binary, process host or browser Worker.
+`EngineLine`, `PositionAnalysis` and the depth-shaped `SearchRequest` are
+classifier-owned structural types exported from `/core` and `/contracts`. There
+is no root import and no bundled engine binary, process host or browser Worker.
 See [evidence and recording contracts](docs/API.md), [core source](src/chess-analysis/analyze.ts),
 [policy source](src/chess-analysis/knights-eye-policy.ts) and [consumer tests](tests).
+
+The preview `/engine/stockfish` export has moved to the separate UCI client.
+Hosts that used `createStockfishAdapter` should inject an `AnalysisEngine` whose
+`search` translates `depth` to the client's `limit: { depth }`. See
+[the migration example](docs/API.md#uci-client-migration). Previously published
+prereleases retain their original exports.
 
 Recorded decisions are for display. Restoring a record never turns it into live
 engine evidence. Your app owns legal replay on import, storage, opening data,

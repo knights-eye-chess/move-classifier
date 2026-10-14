@@ -29,7 +29,6 @@ const entries = {
   policy: "export { createKnightsEyePolicy, KNIGHTS_EYE_POLICY } from './src/chess-analysis/knights-eye-policy.ts';",
   'recorded-decision': "export * from './src/chess-analysis/recorded-decision.ts'; export * from './src/chess-analysis/contracts.ts'; export * from './src/chess-analysis/classifier-decision.ts';",
   compatibility: "export { createKnightsEyePolicyRuntime } from './src/chess-analysis/knights-eye-policy-runtime.js'; export * from './src/chess-analysis/classifier-decision.ts';" + compatibilitySources(),
-  stockfish: "export { createStockfishAdapter } from './src/chess-analysis/stockfish-adapter.ts';",
 };
 for (const [name, contents] of Object.entries(entries)) {
   await build({ stdin: { contents, resolveDir: root, sourcefile: `${name}-entry.ts`, loader: 'ts' },
@@ -41,7 +40,7 @@ const config = { compilerOptions: { declaration: true, emitDeclarationOnly: true
   strict: true, target: 'ES2022', module: 'ESNext', moduleResolution: 'Bundler',
   lib: ['ES2022', 'DOM'], types: [], skipLibCheck: true,
   rootDir: source, outDir: path.join(out, 'types') },
-files: ['analyze.ts', 'stockfish-adapter.ts', 'recorded-decision.ts', 'knights-eye-policy.ts', 'classifier-decision.ts']
+files: ['analyze.ts', 'analysis-types.ts', 'recorded-decision.ts', 'knights-eye-policy.ts', 'classifier-decision.ts']
   .map(file => path.join(source, file)) };
 const configFile = path.join(out, 'declarations.json');
 writeFileSync(configFile, JSON.stringify(config));
@@ -57,11 +56,10 @@ for (const file of readdirSync(path.join(out, 'types'))) {
     /(?:from |import\()(['"])(\.\/[^'"]+)\1/g,
     (_all, quote, specifier) => `${_all.startsWith('from') ? 'from ' : 'import('}${quote}${specifier.endsWith('.js') ? specifier : specifier + '.js'}${quote}`));
 }
-writeFileSync(path.join(out, 'core.d.ts'), "export * from './types/analyze.js';\n");
+writeFileSync(path.join(out, 'core.d.ts'), "export * from './types/analyze.js';\nexport type { EngineLine, PositionAnalysis, SearchRequest } from './types/analysis-types.js';\n");
 writeFileSync(path.join(out, 'policy.d.ts'), "export * from './types/knights-eye-policy.js';\n");
-writeFileSync(path.join(out, 'stockfish.d.ts'), "export { createStockfishAdapter } from './types/stockfish-adapter.js';\nexport type { EngineAcquire, EnginePort, EngineLine, PositionAnalysis, SearchRequest } from './types/stockfish-adapter.js';\n");
-writeFileSync(path.join(out, 'recorded-decision.d.ts'), "export * from './types/recorded-decision.js'; export * from './types/contracts.js'; export * from './types/classifier-decision.js';\n");
+writeFileSync(path.join(out, 'recorded-decision.d.ts'), "export * from './types/recorded-decision.js'; export * from './types/contracts.js'; export * from './types/classifier-decision.js';\nexport type { EngineLine, PositionAnalysis, SearchRequest } from './types/analysis-types.js';\n");
 writeFileSync(path.join(out, 'compatibility.d.ts'), "export { createKnightsEyePolicyRuntime } from './types/knights-eye-policy-runtime.js'; export * from './types/classifier-decision.js';\n" + compatibilityNames.map(name => `export const ${name}: string;\n`).join(''));
-for (const name of ['analysis-phase2', 'recorded-decision', 'stockfish-admission']) {
+for (const name of ['analysis-phase2', 'recorded-decision']) {
   copyFileSync(path.join(root, 'test', `${name}.test.mjs`), path.join(out, `${name}.test.mjs`));
 }

@@ -1,4 +1,4 @@
-import type { EngineLine, PositionAnalysis, SearchRequest } from './stockfish-adapter';
+import type { EngineLine, PositionAnalysis, SearchRequest } from './analysis-types';
 import type { PolicyIdentity } from './recorded-decision';
 
 export type ChessMove = { from: string; to: string; san: string; color: string; promotion?: string; piece?: string; captured?: string; flags?: string; uci: string };
