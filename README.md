@@ -121,7 +121,7 @@ Great/uniqueness or replace unrestricted rankings. A failed required comparison
 returns unavailable so hosts can retain their last completed label without new UI.
 See [comparison acquisition](docs/API.md#material-evaluation-conflicts).
 
-## Classification policy 46 candidate
+## Classification policy 47 candidate
 
 Brilliant requires a near-best move, a real offered piece, and sound engine
 outcomes after every enumerated legal acceptance. The board check considers
@@ -134,7 +134,7 @@ admitted favorable mate after acceptance. A piece already left capturable on
 the mover's previous turn uses the ordinary offer gate; if the opponent's
 last move newly attacked it, a bounded legal exchange on every immediate
 recovery square must leave a real material deficit. This attribution requires
-verified move history. See the [Brilliant policy details](docs/API.md#brilliant-policy-46-candidate).
+verified move history. See the [Brilliant policy details](docs/API.md#brilliant-policy-47-candidate).
 When the original unrestricted search ranked the move below first, an otherwise
 Brilliant move also needs one admitted, same-depth two-root comparison between
 the original best and played moves. Missing or refuting comparison evidence
