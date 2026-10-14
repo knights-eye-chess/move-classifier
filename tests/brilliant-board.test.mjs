@@ -479,3 +479,55 @@ test('explicit selected verification is scoped to one native classification call
   assert.equal(native.classify(context).sacrificeVerification.depth, 10,
     'the selected depth must not leak through the shared verification cache');
 });
+
+test('Brilliant pair demotion rechecks Interesting proof without granting an automatic fallback', () => {
+  const captured = JSON.parse(readFileSync(new URL('./fixtures/brilliant-pair-interesting.json', import.meta.url))).context;
+  const context = structuredClone(captured);
+  const oldProof = context.afterAnalysis.sacrificeVerification;
+  delete context.afterAnalysis.sacrificeVerification;
+  const state = policy.offer(context);
+  context.afterAnalysis.sacrificeVerification = policy.verify(context, state, [{
+    depth: oldProof.depth, scoreCp: oldProof.scoreCp, mate: oldProof.mate, pv: oldProof.pv
+  }]);
+  assert.ok(context.afterAnalysis.sacrificeVerification);
+  const decision = policy.classify(context);
+  assert.equal(decision.classification, 'interesting');
+  assert.equal(decision.sacrifice, false);
+  assert.equal(decision.interestingMove, true);
+  assert.equal(decision.comparisonSource, 'brilliant-pair');
+  assert.equal(decision.playedBest, false);
+  assert.equal(decision.greatMove, false);
+  assert.ok(Math.abs(decision.qualityLoss - .0279538387487403) < 1e-12);
+
+  const missing = structuredClone(context);
+  delete missing.comparisonAnalysis;
+  assert.equal(policy.classify(missing).interestingMove, false, 'missing pair cannot invent the Interesting tier');
+  assert.equal(policy.classify(missing).sacrifice, false);
+
+  const noPayoff = structuredClone(context);
+  const noPayoffState = policy.offer(noPayoff);
+  noPayoff.afterAnalysis.sacrificeVerification = policy.verify(noPayoff, noPayoffState, [{
+    depth: 10, scoreCp: -100, mate: null, pv: ['g2h3']
+  }]);
+  assert.deepEqual(noPayoff.afterAnalysis.sacrificeVerification.pv, ['g2h3']);
+  const failed = policy.classify(noPayoff);
+  assert.equal(failed.sacrifice, false);
+  assert.equal(failed.interestingMove, false, 'complete acceptance with no payoff must not get Interesting');
+  assert.equal(failed.classification, 'okay');
+
+  const excessiveLoss = structuredClone(context);
+  excessiveLoss.comparisonAnalysis.candidates[1].scoreCp = -60;
+  const tooCostly = policy.classify(excessiveLoss);
+  assert.ok(tooCostly.qualityLoss > .05);
+  assert.equal(tooCostly.interestingMove, false, 'pair loss above Interesting ceiling must remain ordinary');
+  assert.equal(tooCostly.classification, 'dubious');
+
+  const originallyOrdinary = structuredClone(context);
+  originallyOrdinary.beforeAnalysis.scoreCp = 100;
+  originallyOrdinary.beforeAnalysis.candidates[0].scoreCp = 100;
+  assert.equal(policy.classify(originallyOrdinary).interestingMove, false, 'an incidental supplied pair cannot promote an originally ordinary move');
+
+  const ordinary = structuredClone(context);
+  ordinary.comparisonAnalysis.candidates.push(structuredClone(ordinary.beforeAnalysis.candidates[1]));
+  assert.equal(policy.classify(ordinary).interestingMove, false, 'ordinary three-root comparison cannot create special credit');
+});

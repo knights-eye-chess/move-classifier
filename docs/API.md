@@ -112,7 +112,7 @@ and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
 `createKnightsEyePolicyRuntime`. Applications generate historical widget strings
 from these installed exports; application source is never a fallback policy owner.
 
-## Brilliant policy 46 candidate
+## Brilliant policy 47 candidate
 
 The unsafe-piece, trapped-piece and rescue heuristics are adapted from the
 ideas in [WintrChess](https://github.com/WintrCat/wintrchess) (GPL-3.0). No
@@ -224,7 +224,7 @@ The recorded depth is the **achieved** depth when movetime stops a search
 early. Its 25 fixtures include short branches and are not interchangeable
 with the application's full Great-and-Brilliant acceptance inventory.
 
-Policy revision 46 invalidates saved classifications from revision 43 and
+Policy revision 47 invalidates saved classifications from revision 46 and
 earlier; hosts must reclassify them from current engine evidence. Its
 `SacrificeVerification` record no longer exposes the old PV material-path,
 material-thread, persistent-offer, conversion-gain, or voluntary-offer-cap
@@ -319,3 +319,15 @@ For unrestricted searches, MultiPV is an upper bound. On `bestmove`, the UCI cli
 accepts the nonempty returned candidate set even when it contains fewer lines
 than requested. It retains achieved-depth, score, distinct-root and bestmove
 checks. Explicit `searchmoves` requests still require every requested root.
+
+### Pair demotion to Interesting (revision 47)
+
+An admitted Brilliant-specific pair can move a previously proven Brilliant offer
+into Interesting's quality band. The final decision rechecks the existing
+Interesting predicate with that same acceptance proof and the pair's scores.
+This is not an automatic fallback: material offer, accepted soundness, and
+legacy Interesting payoff must still qualify. Original global rank, Great and
+uniqueness are not promoted. Ordinary comparison searches keep their existing
+conservative rule and cannot create special credit. Missing or inadmissible
+Brilliant pairs do not establish Interesting credit. Revision 47 invalidates
+revision 46 records, including the published `.3` preview.

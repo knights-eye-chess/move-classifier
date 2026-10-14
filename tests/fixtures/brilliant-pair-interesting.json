@@ -1,0 +1,489 @@
+{
+  "source": "SF19 Lite fixture001-v015 ply32; one thread, Hash16MiB, root/pair depth15, acceptance depth10, movetime3000; captured shared-policy session",
+  "context": {
+    "move": {
+      "color": "b",
+      "from": "e6",
+      "to": "h3",
+      "piece": "b",
+      "captured": "p",
+      "flags": "c",
+      "san": "Bxh3",
+      "lan": "e6h3",
+      "before": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+      "after": "r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17",
+      "uci": "e6h3"
+    },
+    "previousMove": {
+      "color": "w",
+      "from": "c1",
+      "to": "g5",
+      "piece": "b",
+      "flags": "n",
+      "san": "Bg5",
+      "lan": "c1g5",
+      "before": "r3kr2/ppp1n2p/2npb1p1/8/4P3/2N2N1P/P4PP1/R1B1R1K1 w - - 3 16",
+      "after": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+      "uci": "c1g5"
+    },
+    "previousMaterialExchange": {
+      "transition": "retains",
+      "originFen": "",
+      "inherited": false,
+      "activeThreads": [
+        {
+          "originFen": "r1b1k1nr/ppppq2p/2n3p1/2Q5/4P3/2p2N2/P4PPP/RNB2RK1 w - - 1 12",
+          "targetSquare": "e7",
+          "creatorUci": "c5e7",
+          "lastCaptureUci": "g8e7"
+        },
+        {
+          "originFen": "r1bqk1nr/pppp1ppp/2n5/2b5/2BpP3/2P2N2/P4PPP/RNBQ1RK1 b kq - 1 7",
+          "targetSquare": "c3",
+          "creatorUci": "d4c3",
+          "lastCaptureUci": "b1c3"
+        }
+      ],
+      "transitions": [
+        {
+          "kind": "retains"
+        }
+      ]
+    },
+    "beforeFen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+    "afterFen": "r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17",
+    "priorFen": "r3kr2/ppp1n2p/2npb1p1/8/4P3/2N2N1P/P4PP1/R1B1R1K1 w - - 3 16",
+    "priorOwnBeforeFen": "r3k2r/ppp1n2p/2npb1p1/8/4P3/2N2N1P/P4PP1/R1B1R1K1 b - - 2 15",
+    "beforeAnalysis": {
+      "multipv": 1,
+      "depth": 15,
+      "scoreCp": 36,
+      "mate": null,
+      "pv": [
+        "e7g8",
+        "a1b1",
+        "b7b6",
+        "b1d1",
+        "h7h6",
+        "g5h4",
+        "e8d7",
+        "e4e5",
+        "d6d5",
+        "c3d5",
+        "d7c8",
+        "d5f6"
+      ],
+      "scoreProvenance": {
+        "kind": "root-search",
+        "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+        "originatingDepth": 15,
+        "reportedDepth": 15,
+        "engineBuild": "Stockfish 19 Lite WASM"
+      },
+      "requestedDepth": 15,
+      "bestmove": "e7g8",
+      "candidates": [
+        {
+          "multipv": 1,
+          "depth": 15,
+          "scoreCp": 36,
+          "mate": null,
+          "pv": [
+            "e7g8",
+            "a1b1",
+            "b7b6",
+            "b1d1",
+            "h7h6",
+            "g5h4",
+            "e8d7",
+            "e4e5",
+            "d6d5",
+            "c3d5",
+            "d7c8",
+            "d5f6"
+          ],
+          "scoreProvenance": {
+            "kind": "root-search",
+            "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        },
+        {
+          "multipv": 2,
+          "depth": 15,
+          "scoreCp": 15,
+          "mate": null,
+          "pv": [
+            "e8d7",
+            "a1d1",
+            "a8e8",
+            "g5h6",
+            "f8f3",
+            "g2f3",
+            "e6c4",
+            "a2a3",
+            "a7a5",
+            "g1g2",
+            "b7b5",
+            "f3f4",
+            "b5b4",
+            "a3b4",
+            "a5b4",
+            "c3a4",
+            "e8a8",
+            "a4b2",
+            "c4g8",
+            "b2d3"
+          ],
+          "scoreProvenance": {
+            "kind": "root-search",
+            "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        },
+        {
+          "multipv": 3,
+          "depth": 15,
+          "scoreCp": 0,
+          "mate": null,
+          "pv": [
+            "f8f7",
+            "a1d1",
+            "c6e5",
+            "f3e5",
+            "d6e5",
+            "d1b1",
+            "a8b8",
+            "c3d5",
+            "e6d5",
+            "e4d5",
+            "e8d7",
+            "e1e5",
+            "d7d6",
+            "e5e6",
+            "d6d7"
+          ],
+          "scoreProvenance": {
+            "kind": "root-search",
+            "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        }
+      ]
+    },
+    "afterAnalysis": {
+      "multipv": 1,
+      "depth": 15,
+      "scoreCp": 5,
+      "mate": null,
+      "pv": [
+        "c3d5",
+        "e8d7",
+        "d5f6",
+        "f8f6",
+        "g5f6",
+        "h3e6",
+        "f3g5",
+        "e6g8",
+        "e4e5",
+        "d6e5",
+        "a1d1",
+        "e7d5",
+        "f6g7",
+        "a8e8",
+        "g5h7",
+        "d7c8",
+        "a2a3",
+        "e8d8"
+      ],
+      "scoreProvenance": {
+        "kind": "root-search",
+        "fen": "r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17",
+        "originatingDepth": 15,
+        "reportedDepth": 15,
+        "engineBuild": "Stockfish 19 Lite WASM"
+      },
+      "requestedDepth": 15,
+      "bestmove": "c3d5",
+      "candidates": [
+        {
+          "multipv": 1,
+          "depth": 15,
+          "scoreCp": 5,
+          "mate": null,
+          "pv": [
+            "c3d5",
+            "e8d7",
+            "d5f6",
+            "f8f6",
+            "g5f6",
+            "h3e6",
+            "f3g5",
+            "e6g8",
+            "e4e5",
+            "d6e5",
+            "a1d1",
+            "e7d5",
+            "f6g7",
+            "a8e8",
+            "g5h7",
+            "d7c8",
+            "a2a3",
+            "e8d8"
+          ],
+          "scoreProvenance": {
+            "kind": "root-search",
+            "fen": "r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        },
+        {
+          "multipv": 2,
+          "depth": 15,
+          "scoreCp": 3,
+          "mate": null,
+          "pv": [
+            "a1c1",
+            "a8c8",
+            "c3d5",
+            "e8d7",
+            "d5f6",
+            "f8f6",
+            "g5f6",
+            "h3e6",
+            "e4e5",
+            "e6a2",
+            "f6e7",
+            "d7e7"
+          ],
+          "scoreProvenance": {
+            "kind": "root-search",
+            "fen": "r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        },
+        {
+          "multipv": 3,
+          "depth": 15,
+          "scoreCp": 2,
+          "mate": null,
+          "pv": [
+            "a1b1",
+            "b7b6",
+            "c3d5",
+            "e8d7",
+            "b1c1",
+            "a8c8",
+            "d5f6",
+            "f8f6",
+            "g5f6",
+            "h3e6",
+            "a2a3",
+            "c8e8",
+            "e4e5",
+            "e7d5",
+            "f6g7",
+            "e8e7",
+            "f3g5",
+            "e6g8"
+          ],
+          "scoreProvenance": {
+            "kind": "root-search",
+            "fen": "r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        }
+      ],
+      "sacrificeVerification": {
+        "offerMode": "static",
+        "requiresSettledDeficit": false,
+        "settledRecoveryResidual": null,
+        "settledRecoveryNodes": 0,
+        "settledRecoveryOverBudget": false,
+        "declinedRecaptureWitness": false,
+        "forcingCheckWitness": false,
+        "continuationComplete": true,
+        "continuationStatus": "none",
+        "acceptanceLines": [
+          {
+            "uci": "g2h3",
+            "depth": 10,
+            "scoreCp": -227,
+            "mate": null,
+            "pv": [
+              "g2h3",
+              "f8f3",
+              "c3d5",
+              "e7d5",
+              "e4d5",
+              "c6e5",
+              "g1g2",
+              "f3f5",
+              "f2f4",
+              "e8d7"
+            ]
+          }
+        ],
+        "candidateScopeKey": "stockfish|classifier46|board-offer-depth10|r3kr2/ppp1n2p/2np2p1/6B1/4P3/2N2N1b/P4PP1/R3R1K1 w - - 0 17|g2h3:230:r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16:230:static:0:null:0:created-offer:230:::",
+        "classifierVersion": 46,
+        "source": "searchmoves",
+        "depth": 10,
+        "candidateUcis": [
+          "g2h3"
+        ],
+        "acceptedMove": "g2h3",
+        "capturedSquare": "h3",
+        "capturedPiece": "b",
+        "capturedValue": 330,
+        "materialOffer": 230,
+        "rawQualifyingMaterialOffer": 230,
+        "qualifyingMaterialOffer": 230,
+        "directRecoveryResidual": 230,
+        "directRecoveryCount": 0,
+        "directRecoveryUcis": [],
+        "offerBaselineFen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+        "materialThreadOrigin": "created-offer",
+        "favorableMate": false,
+        "scoreCp": -227,
+        "mate": null,
+        "pv": [
+          "g2h3",
+          "f8f3",
+          "c3d5",
+          "e7d5",
+          "e4d5",
+          "c6e5",
+          "g1g2",
+          "f3f5",
+          "f2f4",
+          "e8d7"
+        ],
+        "coverageComplete": true,
+        "verifiedCandidateUcis": [
+          "g2h3"
+        ],
+        "worstAcceptedEp": 0.6319231848226052
+      }
+    },
+    "priorEp": 0.5,
+    "book": false,
+    "comparisonAnalysis": {
+      "multipv": 1,
+      "depth": 15,
+      "scoreCp": 43,
+      "mate": null,
+      "pv": [
+        "e7g8",
+        "a1d1",
+        "h7h6",
+        "g5h4",
+        "g6g5",
+        "h4g3",
+        "f8f7",
+        "e4e5",
+        "d6d5",
+        "c3d5",
+        "a8d8",
+        "d5c3",
+        "d8d1",
+        "e1d1",
+        "f7d7",
+        "d1c1",
+        "g8e7"
+      ],
+      "scoreProvenance": {
+        "kind": "reconciliation-root",
+        "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+        "originatingDepth": 15,
+        "reportedDepth": 15,
+        "engineBuild": "Stockfish 19 Lite WASM"
+      },
+      "bestmove": "e7g8",
+      "candidates": [
+        {
+          "multipv": 1,
+          "depth": 15,
+          "scoreCp": 43,
+          "mate": null,
+          "pv": [
+            "e7g8",
+            "a1d1",
+            "h7h6",
+            "g5h4",
+            "g6g5",
+            "h4g3",
+            "f8f7",
+            "e4e5",
+            "d6d5",
+            "c3d5",
+            "a8d8",
+            "d5c3",
+            "d8d1",
+            "e1d1",
+            "f7d7",
+            "d1c1",
+            "g8e7"
+          ],
+          "scoreProvenance": {
+            "kind": "reconciliation-root",
+            "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        },
+        {
+          "multipv": 2,
+          "depth": 15,
+          "scoreCp": -4,
+          "mate": null,
+          "pv": [
+            "e6h3",
+            "c3d5",
+            "e8d7",
+            "d5f6",
+            "d7e6",
+            "f6h7",
+            "f8f3",
+            "g2f3",
+            "a8h8",
+            "h7f6",
+            "c6d4",
+            "e1e3",
+            "c7c5",
+            "a1d1",
+            "b7b5",
+            "f3f4",
+            "e6f7",
+            "f2f3",
+            "e7c6",
+            "a2a3",
+            "a7a5",
+            "f6g4",
+            "h3g4",
+            "f3g4"
+          ],
+          "scoreProvenance": {
+            "kind": "reconciliation-root",
+            "fen": "r3kr2/ppp1n2p/2npb1p1/6B1/4P3/2N2N1P/P4PP1/R3R1K1 b - - 4 16",
+            "originatingDepth": 15,
+            "reportedDepth": 15,
+            "engineBuild": "Stockfish 19 Lite WASM"
+          }
+        }
+      ]
+    }
+  }
+}
