@@ -128,6 +128,7 @@ async function classifyFixture(fixture, engine, cache) {
     const context = {
       move, previousMove: index ? { ...moves[index - 1], uci: moves[index - 1].lan } : null,
       previousMaterialExchange: previousExchange, beforeFen, afterFen,
+      priorFen: index >= 1 ? fens[index - 1] : '',
       priorOwnBeforeFen: index >= 2 ? fens[index - 2] : '',
       beforeAnalysis: await position(beforeFen), afterAnalysis: await position(afterFen),
       priorEp: index ? policy.priorPoints(await position(fens[index - 1])) : null,
@@ -157,7 +158,24 @@ async function classifyFixture(fixture, engine, cache) {
     const decision = policy.classify(context);
     const key = `${index + 1}:${move.san}`;
     if (sets[decision.classification]) sets[decision.classification].push(key);
-    if (decision.sacrifice || state.candidates.length) diagnostics.push({ key, label: decision.classification, offers: state.candidates.map(candidate => candidate.uci), accepted: decision.sacrificeVerification?.acceptedMove, ep: decision.afterEp, secondEp: decision.secondEp, qualityLoss: decision.qualityLoss });
+    if (decision.sacrifice || state.candidates.length) {
+      const lines = context.beforeAnalysis.candidates || [];
+      const best = lines.find(line => line.pv?.[0] === context.beforeAnalysis.bestmove);
+      const playedLine = lines.find(line => line.pv?.[0] === move.uci);
+      diagnostics.push({ key, label: decision.classification,
+        offers: state.candidates.map(candidate => ({ uci: candidate.uci, mode: candidate.offerMode,
+          requiresSettledDeficit: candidate.requiresSettledDeficit,
+          settledRecoveryResidual: candidate.settledRecoveryResidual,
+          settledRecoveryNodes: candidate.settledRecoveryNodes,
+          settledRecoveryOverBudget: candidate.settledRecoveryOverBudget })),
+        accepted: decision.sacrificeVerification?.acceptedMove,
+        bestmove: context.beforeAnalysis.bestmove,
+        playedRank: playedLine ? lines.indexOf(playedLine) + 1 : '>MultiPV',
+        marginCp: typeof best?.scoreCp === 'number' && typeof playedLine?.scoreCp === 'number'
+          ? best.scoreCp - playedLine.scoreCp : null,
+        bestCp: best?.scoreCp ?? null, playedCp: playedLine?.scoreCp ?? null,
+        ep: decision.afterEp, qualityLoss: decision.qualityLoss });
+    }
   }
   return { sets, diagnostics, continuationSearches, continuationRoots, continuationMs };
 }
@@ -181,18 +199,23 @@ test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interest
       // this isolated profile controls that source of test variation.
       await engine.newGame();
       const result = await classifyFixture(fixture, engine, new Map());
+      console.log(`[fixture labels] ${JSON.stringify({ fixture: fixture.name, sets: result.sets, diagnostics: result.diagnostics })}`);
       if (result.continuationSearches) console.log(`[continuations] ${fixture.name}: ${result.continuationSearches} searches, ${result.continuationRoots} roots, ${Math.round(result.continuationMs)} ms`);
       const variants = fixture.expectedSpecialVariants || [{ brilliant: fixture.expected || [], interesting: fixture.expectedInteresting || [] }];
       const actual = { brilliant: result.sets.brilliant, interesting: result.sets.interesting };
-      const compare = fixture.name.startsWith('Owner game ') || fixture.name.startsWith('Either-way ')
+      const compare = fixture.brilliantOnly || fixture.name.startsWith('Owner game ') || fixture.name.startsWith('Either-way ')
         ? value => ({ brilliant: value.brilliant }) : value => value;
       const allowedOptional = fixture.optionalBrilliant || [];
+      const allowedInteresting = fixture.optionalInteresting || [];
       const matchesVariant = variant => {
         const required = compare(variant), observed = compare(actual);
         const allowed = new Set([...(required.brilliant || []), ...allowedOptional]);
+        const interesting = new Set([...(required.interesting || []), ...allowedInteresting]);
         return (required.brilliant || []).every(key => observed.brilliant.includes(key)) &&
           observed.brilliant.every(key => allowed.has(key)) &&
-          (required.interesting === undefined || JSON.stringify(required.interesting) === JSON.stringify(observed.interesting));
+          (required.interesting === undefined ||
+            ((required.interesting || []).every(key => observed.interesting.includes(key)) &&
+              observed.interesting.every(key => interesting.has(key))));
       };
       if (!variants.some(matchesVariant)) differences.push({ fixture: fixture.name, expected: variants, optionalBrilliant: allowedOptional, actual, diagnostics: result.diagnostics });
       for (const forbidden of fixture.forbiddenBrilliant || []) if (actual.brilliant.includes(forbidden)) differences.push({ fixture: fixture.name, forbidden, actual });

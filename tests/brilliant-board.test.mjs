@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { Chess } from 'chess.js';
 import { createKnightsEyePolicy } from '@knights-eye-chess/move-classifier/policy/knights-eye';
 import { createAnalysisService } from '@knights-eye-chess/move-classifier/core';
@@ -10,6 +11,104 @@ function played(fen, san) {
   const board = new Chess(fen), move = board.move(san);
   return { beforeFen: fen, afterFen: board.fen(), move: { ...move, uci: move.lan } };
 }
+const fixtures = JSON.parse(readFileSync(new URL('./fixtures/brilliant-corpus.json', import.meta.url)));
+function fixtureMove(name, ply) {
+  const fixture = [...fixtures.fixtures, ...fixtures.interestingFixtures, ...fixtures.addedFixtures]
+    .find(item => item.name === name);
+  assert.ok(fixture, `Missing fixture ${name}`);
+  const game = new Chess(); game.loadPgn(fixture.pgn);
+  const moves = game.history({ verbose: true }), board = new Chess(game.header().FEN || undefined);
+  const fens = [board.fen()];
+  for (const move of moves) { board.move(move.lan); fens.push(board.fen()); }
+  const index = ply - 1;
+  return { move: { ...moves[index], uci: moves[index].lan }, beforeFen: fens[index], afterFen: fens[index + 1],
+    previousMove: index ? { ...moves[index - 1], uci: moves[index - 1].lan } : null,
+    priorFen: index >= 1 ? fens[index - 1] : '', priorOwnBeforeFen: index >= 2 ? fens[index - 2] : '' };
+}
+
+function replayMove(initialFen, sans) {
+  const board = new Chess(initialFen), fens = [board.fen()], moves = [];
+  for (const san of sans) { moves.push(board.move(san)); fens.push(board.fen()); }
+  const index = moves.length - 1;
+  return { move: { ...moves[index], uci: moves[index].lan }, beforeFen: fens[index], afterFen: fens[index + 1],
+    previousMove: { ...moves[index - 1], uci: moves[index - 1].lan },
+    priorFen: fens[index - 1], priorOwnBeforeFen: fens[index - 2] };
+}
+
+test('standing offers require exact legal history and a net prior material deficit', () => {
+  const offer = (context, uci) => policy.offer(context, {}, '').candidates.find(candidate => candidate.uci === uci);
+  const qh4 = fixtureMove('FixturePlayer002 vs FixturePlayer003', 16);
+  assert.equal(offer(qh4, 'c3d4')?.requiresSettledDeficit, true,
+    '8...Qh4 needs settled material evidence for the knight newly attacked by 8.c3');
+  assert.equal(offer(qh4, 'c3d4')?.settledRecoveryResidual, -10,
+    'Qxe4+ restores the offered knight value on another square');
+  assert.ok(!policy.offer(qh4, {}, '').candidates.some(candidate => candidate.offerMode === 'declined-recapture'),
+    '8...Qh4 cannot enter through the separate declined-recapture witness');
+  const bb4 = fixtureMove('FixturePlayer001 vs FixturePlayer004', 29);
+  assert.equal(offer(bb4, 'c6d5')?.requiresSettledDeficit, false, '15.Bb4 retains the knight offer available before 14...Qc5');
+  assert.ok(!offer({ ...bb4, priorFen: '' }, 'c6d5'), 'an absent exact branch history cannot prove a standing offer');
+  assert.ok(!offer({ ...bb4, priorFen: qh4.priorFen }, 'c6d5'), 'a foreign or transposed history cannot prove a standing offer');
+  const nxc3 = fixtureMove('FixturePlayer001 vs FixturePlayer020', 17);
+  assert.equal(offer(nxc3, 'f8f7')?.requiresSettledDeficit, false, '9.Nxc3 retains the declined bishop offer');
+  const re1 = fixtureMove('Owner game B 22.Re1 offer', 43);
+  assert.equal(offer(re1, 'b6c5')?.requiresSettledDeficit, false, '22.Re1 retains a geometric capture temporarily barred by check');
+  const pinned = replayMove('4k3/4p3/8/2B5/8/8/8/4R1K1 w - - 0 1', ['Bd6', 'Kf7', 'Kh2']);
+  assert.ok(!new Chess(pinned.priorFen).moves({ verbose: true }).some(move => move.to === 'd6'),
+    'the prior pawn capture is illegal while pinned');
+  assert.equal(offer(pinned, 'e7d6')?.requiresSettledDeficit, false, 'the same prior capture still existed by piece geometry');
+  const defendedKingTarget = replayMove('4k3/5R1r/8/8/8/8/8/4KR2 w - - 0 1', ['Kd1', 'Rg7', 'Ke2']);
+  assert.ok(!new Chess(defendedKingTarget.priorFen).moves({ verbose: true }).some(move => move.from === 'e8' && move.to === 'f7'),
+    'the black king cannot take the rook while another white rook defends f7');
+  assert.equal(offer(defendedKingTarget, 'g7f7')?.requiresSettledDeficit, true,
+    'a geometrically adjacent king cannot establish a prior offer by entering a defended square');
+  const initial = '4k3/1p6/8/8/2B5/8/8/4K3 w - - 0 1';
+  const quietOffer = replayMove(initial, ['Ba6', 'Kf7', 'Kd2']);
+  assert.equal(offer(quietOffer, 'b7a6')?.requiresSettledDeficit, false, 'a genuinely declined bishop offer remains eligible');
+  const tookRook = replayMove('4k3/1p6/r7/8/2B5/8/8/4K3 w - - 0 1', ['Bxa6', 'Kf7', 'Kd2']);
+  assert.equal(offer(tookRook, 'b7a6')?.requiresSettledDeficit, true, 'capturing a rook first leaves no prior net material offer');
+  const tookKnight = replayMove('4k3/1p6/n7/8/2B5/8/8/4K3 w - - 0 1', ['Bxa6', 'Kf7', 'Kd2']);
+  assert.equal(offer(tookKnight, 'b7a6')?.requiresSettledDeficit, true, 'an equal piece trade is not a prior net offer');
+  const relocated = played('4k3/1p6/8/1p6/R7/8/8/4K3 w - - 0 1', 'Ra6');
+  assert.equal(offer(relocated, 'b7a6')?.requiresSettledDeficit, false,
+    'moving an already attacked rook to a different capturable square creates a new board offer');
+  const castled = replayMove('4k3/1p6/B7/8/8/8/8/4K2R w K - 0 1', ['O-O', 'Kd7', 'Kh2']);
+  assert.equal(offer(castled, 'b7a6')?.requiresSettledDeficit, false, 'exact prior history admits castling');
+  const enPassant = replayMove('4k3/1p6/B7/3pP3/8/8/8/4K3 w - d6 0 1', ['exd6', 'Kf7', 'Kd2']);
+  assert.equal(offer(enPassant, 'b7a6')?.requiresSettledDeficit, false, 'exact prior history admits en passant');
+  const promotion = replayMove('4k3/1p4P1/R7/8/8/8/8/4K3 w - - 0 1', ['g8=N', 'Kf7', 'Kd2']);
+  assert.equal(offer(promotion, 'b7a6')?.requiresSettledDeficit, false, 'exact prior history admits promotion with net material accounting');
+});
+
+test('newly attacked offers need a persistent material deficit after legal exchange settlement', () => {
+  const line = (uci, cp) => ({ depth: 15, scoreCp: cp, mate: null, pv: [uci] });
+  const decide = (context, acceptance, bestCp = 20) => {
+    const state = policy.offer(context, {}, '');
+    const proof = policy.verify(context, state, [{ depth: 10, scoreCp: -100, mate: null, pv: [acceptance] }]);
+    const played = line(context.move.uci, bestCp), alternative = line('a2a3', bestCp - 10);
+    return { proof, decision: policy.classify({ ...context,
+      beforeAnalysis: { ...played, bestmove: context.move.uci, candidates: [played, alternative] },
+      afterAnalysis: { depth: 15, scoreCp: -bestCp, mate: null, candidates: [], sacrificeVerification: proof } }) };
+  };
+  const qh4 = fixtureMove('FixturePlayer002 vs FixturePlayer003', 16);
+  const qh4Result = decide(qh4, 'c3d4');
+  assert.equal(qh4Result.proof.requiresSettledDeficit, true);
+  assert.equal(qh4Result.proof.directRecoveryResidual, 220, 'same-square recapture misses Qxe4+');
+  assert.equal(qh4Result.proof.settledRecoveryResidual, -10);
+  assert.equal(qh4Result.decision.sacrifice, false, 'first-ranked move still cannot get credit for an equal trade');
+  const b5 = fixtureMove('FixturePlayer001 vs FixturePlayer011', 12);
+  assert.equal(decide(b5, 'c3d4').proof.settledRecoveryResidual, -10, 'bxc4 restores the knight value');
+  assert.equal(decide(b5, 'c3d4').decision.sacrifice, false);
+  const h4 = fixtureMove('FixturePlayer001 vs FixturePlayer018', 21);
+  const h4Result = decide(h4, 'h6g5');
+  assert.equal(h4Result.proof.settledRecoveryResidual, 230,
+    'poisoned Qxf6 is recaptured; sound hxg5 leaves a bishop-for-pawn deficit');
+  assert.ok(h4Result.proof.settledRecoveryNodes > 0);
+  assert.ok(h4Result.proof.settledRecoveryNodes <= 256);
+  assert.equal(h4Result.decision.sacrifice, true);
+  const nxd5 = fixtureMove('Either-way 7...Nxd5', 14);
+  assert.equal(policy.offer(nxd5, {}, '').candidates.find(candidate => candidate.uci === 'c3d4')?.requiresSettledDeficit,
+    false, 'the optional 7...Nxd5 follows the prior-own-turn offer path');
+});
 
 test('unsafe offers distinguish equal trades, lower attackers, rook-for-two-minors and x-ray batteries', () => {
   const unsafe = (fen, white, square = '') => policy.prepared.unsafePieces(fen, white, square);
@@ -61,7 +160,7 @@ test('a losing legal acceptance refutes a promising offered capture', () => {
 });
 
 test('declined recapture compares all forcing replies independently of acceptance PV order', () => {
-  const declined = played('8/p1p2k1p/5np1/8/1b1p4/3P4/PP1B1q1P/RN1KR3 b - - 4 22', 'Nd5');
+  const declined = fixtureMove('FixturePlayer001 vs FixturePlayer011', 44);
   const declinedState = policy.offer(declined, {}, '');
   assert.deepEqual(declinedState.candidates.map(candidate => candidate.uci), ['d2b4']);
   assert.equal(declinedState.candidates[0].offerMode, 'declined-recapture');
@@ -103,7 +202,7 @@ test('declined recapture compares all forcing replies independently of acceptanc
 });
 
 test('service acquires and admits the exact post-acceptance continuation scope', async () => {
-  const context = played('8/p1p2k1p/5np1/8/1b1p4/3P4/PP1B1q1P/RN1KR3 b - - 4 22', 'Nd5');
+  const context = fixtureMove('FixturePlayer001 vs FixturePlayer011', 44);
   const accepted = new Chess(context.afterFen); accepted.move('Bxb4');
   const acceptedFen = accepted.fen();
   const calls = [], responses = [];
@@ -111,7 +210,10 @@ test('service acquires and admits the exact post-acceptance continuation scope',
   const engine = { capabilities: { multiPv: true, rootMoves: true }, async search(request) {
     calls.push(request);
     let roots, values;
-    if (request.fen === context.beforeFen) {
+    if (request.fen === context.priorFen) {
+      roots = new Chess(request.fen).moves({ verbose: true }).map(move => move.lan).slice(0, 3);
+      values = [0, -10, -20];
+    } else if (request.fen === context.beforeFen) {
       roots = [context.move.uci, ...new Chess(request.fen).moves({ verbose: true }).map(move => move.lan).filter(uci => uci !== context.move.uci).slice(0, 2)];
       values = [100, 0, -100];
     } else if (request.fen === context.afterFen && !request.rootMoves) {
@@ -160,7 +262,7 @@ test('service acquires and admits the exact post-acceptance continuation scope',
 });
 
 test('already-winning alternative is blocked unless played-line mate alone is evidenced', () => {
-  const base = played('r1b3k1/p1p2rp1/1p4q1/2N2p2/1P3R2/1QPP2pP/P5P1/R5K1 w - - 2 22', 'Re1');
+  const base = fixtureMove('Owner game B 22.Re1 offer', 43);
   const state = policy.offer(base, {}, '');
   const proof = policy.verify(base, state, [{ depth: 10, scoreCp: -100, mate: null, pv: ['b6c5'] }]);
   assert.ok(proof.qualifyingMaterialOffer >= 120);
@@ -190,7 +292,7 @@ test('already-winning alternative is blocked unless played-line mate alone is ev
 
 test('explicit selected verification is scoped to one native classification call', () => {
   const native = createKnightsEyePolicyRuntime(Chess);
-  const context = played('r1b3k1/p1p2rp1/1p4q1/2N2p2/1P3R2/1QPP2pP/P5P1/R5K1 w - - 2 22', 'Re1');
+  const context = fixtureMove('Owner game B 22.Re1 offer', 43);
   const state = native.offer(context, {}, '');
   assert.equal(state.candidates.length, 1);
   context.beforeAnalysis = { depth: 15, scoreCp: 50, mate: null, bestmove: context.move.uci,

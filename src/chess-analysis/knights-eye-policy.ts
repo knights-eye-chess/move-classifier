@@ -17,6 +17,8 @@ export type SacrificeCandidate = {
   directRecoveryUcis: string[]; recoveryNetLosses: number[]; bestImmediateRecoveryNet: number;
   boardCounterplay: string[];
   offerMode: 'static' | 'declined-recapture' | 'forcing-check';
+  requiresSettledDeficit: boolean; settledRecoveryResidual: number | null;
+  settledRecoveryNodes: number; settledRecoveryOverBudget: boolean;
   equalRecaptureUcis: string[]; declineReplyUcis: string[]; continuationOverBudget: boolean;
   materialThreadOrigin: 'inherited-exchange' | 'created-offer';
 };
@@ -27,6 +29,8 @@ export type SacrificeVerification = {
   qualifyingMaterialOffer: number; rawQualifyingMaterialOffer: number;
   offerBaselineFen: string; scoreCp: number | null; mate: number | null; pv: string[];
   favorableMate: boolean; directRecoveryResidual: number;
+  requiresSettledDeficit: boolean; settledRecoveryResidual: number | null;
+  settledRecoveryNodes: number; settledRecoveryOverBudget: boolean;
   directRecoveryCount: number; directRecoveryUcis: string[];
   materialThreadOrigin: 'inherited-exchange' | 'created-offer';
   coverageComplete: boolean; verifiedCandidateUcis: string[]; worstAcceptedEp: number;
@@ -97,7 +101,7 @@ export type KnightsEyeHistoryContext = {
 /** These getters return runtime-only host caches, never recorded decisions. The
  * host replaces or clears them when its game/engine/evidence epoch changes. */
 export type KnightsEyePreparedCaches = {
-  /** Deprecated compatibility input. Policy 45 has no forced-exposure cache. */
+  /** Deprecated compatibility input. Policy 46 has no forced-exposure cache. */
   materialExposure?(): Record<string, number>;
   sacrificeVerification?(): Record<string, SacrificeVerification>;
 };
@@ -125,10 +129,10 @@ export type KnightsEyePreparedOperations = {
   canLegallyCapture(fen: string, square: string): boolean;
   unsafePieces(fen: string, white: boolean, rookMinorCaptureSquare: string): string[];
   trappedUnsafePieces(fen: string, white: boolean, unsafe: string[]): string[];
-  sacrificeCaptureCandidates(move: ChessMove, beforeFen: string, afterFen: string, priorOwnBeforeFen?: string, exchangeThreadBaselineFen?: string): SacrificeCandidate[];
+  sacrificeCaptureCandidates(move: ChessMove, beforeFen: string, afterFen: string, priorOwnBeforeFen?: string, exchangeThreadBaselineFen?: string, priorFen?: string, previousMove?: ChessMove | null): SacrificeCandidate[];
   sacrificeVerificationKey(afterFen: string, candidates: readonly SacrificeCandidate[]): string;
   evaluateSacrificeLines(move: ChessMove, beforeFen: string, afterFen: string, candidates: SacrificeCandidate[], lines: PreparedEngineLine[], source: string, complete: boolean): SacrificeLineEvaluation;
-  sacrificeVerificationState(move: ChessMove, beforeFen: string, afterFen: string, after?: PreparedPosition | null, priorOwnBeforeFen?: string, exchangeThreadBaselineFen?: string | null): VerificationState<SacrificeVerification, SacrificeCandidate>;
+  sacrificeVerificationState(move: ChessMove, beforeFen: string, afterFen: string, after?: PreparedPosition | null, priorOwnBeforeFen?: string, exchangeThreadBaselineFen?: string | null, priorFen?: string, previousMove?: ChessMove | null): VerificationState<SacrificeVerification, SacrificeCandidate>;
   continuationRequests(context: PreparedAnalysisContext, state: VerificationState<SacrificeVerification, SacrificeCandidate>, verification: SacrificeVerification): ContinuationScope[];
   verifyContinuations(context: PreparedAnalysisContext, state: VerificationState<SacrificeVerification, SacrificeCandidate>, verification: SacrificeVerification, evidence: readonly ContinuationEvidence[]): SacrificeVerification | null;
   classifyAnalyzedMove(context: PreparedAnalysisContext): KnightsEyeDecision;

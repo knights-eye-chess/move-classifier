@@ -112,7 +112,7 @@ and `ANALYSIS_CORE_SOURCE` extracted from the owner runtime at build time, plus
 `createKnightsEyePolicyRuntime`. Applications generate historical widget strings
 from these installed exports; application source is never a fallback policy owner.
 
-## Brilliant policy 45 candidate
+## Brilliant policy 46 candidate
 
 The unsafe-piece, trapped-piece and rescue heuristics are adapted from the
 ideas in [WintrChess](https://github.com/WintrCat/wintrchess) (GPL-3.0). No
@@ -141,6 +141,29 @@ acceptance outcome must remain at or above .40 expected points. PV material
 paths, conversion gains and persistence do not enter the Brilliant proof.
 The older Interesting tier still computes its tactical payoff from the PV,
 only after its other gates pass; it is a separate policy under review.
+
+A static offer of a piece already unsafe before the played move is attributed
+to the mover's previous turn only if the exact two-ply history replays legally,
+the same piece occupied the same square after that turn, and an opponent
+capture was geometrically available then. The hypothetical capture may ignore
+check or a pin on its attacker, while a king still cannot capture onto an
+attacked square. Material is measured from before the mover's previous turn
+through that capture and every direct recapture, so an earlier gain or an equal
+trade does not create a standing offer. Moving the offered piece to a new
+square creates a new offer. When the piece was newly attacked by the opponent's
+last move, the policy enumerates the mover's legal immediate material captures
+after every offered-piece acceptance. For each capture, it settles alternating
+legal recaptures on that capture's destination square, with either side free to
+stop when another legal move exists. The mover chooses the least net material
+loss; the opponent chooses the greatest. The best settled reply must still
+leave at least the existing 120 cp deficit. The exchange tree has a 256-node
+cap per acceptance; exhaustion gives no Brilliant proof. It does not search
+quiet tactical replies and requests no additional engine analysis. All legal
+offered-piece acceptances remain in the verification scope, including those
+that settle to an equal trade, so an unsound acceptance can still refute a
+different qualifying offer. Unknown or ambiguous history cannot certify a
+pre-existing static offer. Labels can still change with engine depth or budget
+through the separate near-best and soundness gates.
 
 The bounded forcing extension admits a temporarily uncompensated piece offer
 when the static rule would otherwise call it trapped or rescued. A trapped

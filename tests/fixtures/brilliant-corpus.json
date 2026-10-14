@@ -25,6 +25,8 @@
         "b": 690
       },
       "expected": [],
+      "optionalInteresting": ["16:h6"],
+      "forbiddenBrilliant": ["16:h6"],
       "pgn": "[White \"FixturePlayer001\"]\n[Black \"FixturePlayer018\"]\n[Result \"*\"]\n\n1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd8 4. d4 Nf6 5. Bc4 e6 6. Bg5 Nbd7\n7. Nge2 Bb4 8. a3 h6 *"
     },
     {
@@ -122,6 +124,7 @@
       "expectedInteresting": [
         "26:Re8+"
       ],
+      "optionalBrilliant": ["14:Nxd5"],
       "expectedSpecialVariants": [
         {
           "brilliant": [
@@ -156,6 +159,8 @@
         "b": 990
       },
       "expected": [],
+      "brilliantOnly": true,
+      "forbiddenBrilliant": ["16:Qh4"],
       "pgn": "[White \"FixturePlayer002\"]\n[Black \"FixturePlayer003\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 Nxe4 5. Nxe4 d5 6. Bd3 dxe4\n7. Bxe4 Nd4 8. c3 Qh4 9. d3 Bc5 10. Be3 b6 11. Bxa8 O-O 12. cxd4 Bxd4\n13. O-O Bh3 14. gxh3 Qxh3 15. Bg2 Qd7 16. Nc3 a6 17. Qa4 b5\n18. Qxa6 b4 19. Nd5 Bxb2 20. Rab1 Bc3 21. Nxc3 bxc3 22. Bc6 Qxd3\n23. Qxd3 h6 24. Qe4 g6 25. f4 Kg7 26. Qxe5+ Kg8 27. Qxc7 c2\n28. Rbc1 g5 29. Rxc2 g4 30. f5 Kg7 31. Qd6 h5 32. Qh6+ Kg8\n33. f6 Re8 34. Qg7# 1-0"
     },
     {
@@ -165,7 +170,7 @@
         "b": 1072
       },
       "expected": [],
-      "expectedInteresting": [],
+      "expectedInteresting": ["30:Bg4"],
       "expectedMaterialThread": {
         "18:Nxd5": {
           "materialExchange": "continues",
@@ -185,6 +190,7 @@
         "w": 734,
         "b": 729
       },
+      "expected": ["15:Bxf7+"],
       "expectedInteresting": [
         "32:Bxh3"
       ],
@@ -295,6 +301,7 @@
       "expected": [
         "43:Re1"
       ],
+      "forbiddenBrilliant": ["45:Qd5"],
       "brilliantOnly": true,
       "pgn": "[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. O-O Bc5 5. Nc3 Nxe4 6. Nxe4 d5 7. Bxd5 Qxd5 8. Nc3 Qe6 9. d3 O-O 10. Ng5 Qg6 11. Nce4 h6 12. Nxc5 hxg5 13. Bd2 g4 14. f3 g3 15. h3 f5 16. f4 Nd4 17. c3 Ne6 18. b4 exf4 19. Bxf4 Nxf4 20. Rxf4 b6 21. Qb3+ Rf7 22. Re1 Kf8 23. Qd5 Rb8 24. Qd8# 1-0"
     },

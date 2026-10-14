@@ -20,11 +20,11 @@ function snapshot() {
 }
 
 test('public classifier identity and scoped telemetry retain current policy and detached snapshot', () => {
-  assert.equal(CLASSIFIER_VERSION, 45);
+  assert.equal(CLASSIFIER_VERSION, 46);
   assert.equal(KNIGHTS_EYE_POLICY.revision, CLASSIFIER_VERSION);
-  assert.equal(hasCurrentClassifierVersion('45'), true);
-  assert.equal(hasCurrentClassifierVersion(44), false);
-  const raw = snapshot(), restored = scopedClassifierDecision(raw, { ...context, hostId: 'extra' }, 'great', 45);
+  assert.equal(hasCurrentClassifierVersion('46'), true);
+  assert.equal(hasCurrentClassifierVersion(45), false);
+  const raw = snapshot(), restored = scopedClassifierDecision(raw, { ...context, hostId: 'extra' }, 'great', 46);
   assert.deepEqual(restored, raw);
   raw.values.bestEp = 0;
   assert.equal(restored.values.bestEp, .7);
@@ -43,17 +43,17 @@ test('scoped telemetry rejects stale occurrence, version, label and malformed si
     d => d.authority = 'engine-proof',
   ]) {
     const raw = snapshot(); change(raw);
-    assert.equal(scopedClassifierDecision(raw, context, 'great', 45), null);
+    assert.equal(scopedClassifierDecision(raw, context, 'great', 46), null);
   }
-  assert.equal(scopedClassifierDecision(null, context, 'great', 45), null);
-  assert.equal(scopedClassifierDecision(snapshot(), context, 'great', 44), null);
+  assert.equal(scopedClassifierDecision(null, context, 'great', 46), null);
+  assert.equal(scopedClassifierDecision(snapshot(), context, 'great', 45), null);
 });
 
-test('public compatibility strings match reviewed policy-45 source bytes', () => {
+test('public compatibility strings match reviewed policy-46 source bytes', () => {
   const hashes = {
     POSITION_RULES_SOURCE: '0153742a17461e13c00de4eb887f94c87a2640c820125315dcb20457aef0acf7',
     CLASSIFIER_RULES_SOURCE: '53eb2fbfe6e4f1ab8b334e1d285d7e4a7b031c75a768e5859396baaa6a7af09f',
-    ANALYSIS_CORE_SOURCE: 'c106a9ab5a911d237254be9d611a381cfb2043890a200d762a6484a7c451ffc1',
+    ANALYSIS_CORE_SOURCE: 'a55f63ffadc605527519bb523aa94708f59a93a732f51cb3831c03a7922fa192',
   };
   for (const [name, hash] of Object.entries(hashes)) {
     assert.equal(createHash('sha256').update(compatibility[name]).digest('hex'), hash, name);

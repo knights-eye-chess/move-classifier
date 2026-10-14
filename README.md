@@ -121,7 +121,7 @@ Great/uniqueness or replace unrestricted rankings. A failed required comparison
 returns unavailable so hosts can retain their last completed label without new UI.
 See [comparison acquisition](docs/API.md#material-evaluation-conflicts).
 
-## Classification policy 45 candidate
+## Classification policy 46 candidate
 
 Brilliant requires a near-best move, a real offered piece, and sound engine
 outcomes after every enumerated legal acceptance. The board check considers
@@ -130,7 +130,11 @@ pieces. It also permits combinations that create counter-threats. The special
 declined-recapture witness enumerates bounded legal forcing replies on the
 board and compares their restricted search outcomes with equal recaptures.
 The checking-combination witness requires a legal checking reply and an
-admitted favorable mate after acceptance. See the [Brilliant policy details](docs/API.md#brilliant-policy-45-candidate).
+admitted favorable mate after acceptance. A piece already left capturable on
+the mover's previous turn uses the ordinary offer gate; if the opponent's
+last move newly attacked it, a bounded legal exchange on every immediate
+recovery square must leave a real material deficit. This attribution requires
+verified move history. See the [Brilliant policy details](docs/API.md#brilliant-policy-46-candidate).
 The remaining PV material-path calculation belongs only to the legacy
 Interesting tier; it is not part of the Brilliant proof.
 
