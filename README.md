@@ -161,9 +161,17 @@ Edit the source in this repository. [SOURCE-ORIGIN.json](SOURCE-ORIGIN.json) rec
 its historical extraction; no application checkout is required to build it.
 The checked pack command runs the build and tests before creating an archive.
 The real-engine corpus is opt-in: set `KE_CORPUS_ENGINE` to a Stockfish JS entry
-point and run `node --test tests/brilliant-corpus.test.mjs`. The fixture metadata
-pins the browser's Hash and movetime budget with isolated fixtures;
-`KE_CORPUS_DEPTH` selects the requested depth for Lite or deeper qualification.
+point and run `node --test tests/brilliant-corpus.test.mjs`. Its default is
+`nodes-admit` with a 2,000,000-node cap, requested depth 15, one thread and
+16 MiB hash, isolated per fixture. Reached-depth evidence still passes through
+the unchanged policy gates. This is a manual qualification gate (about 20 minutes
+on the measured quiet executor), not an ordinary PR check.
+See the [qualification record](docs/research/corpus-acquisition-budget.md) for
+the pinned engine hashes, complete quiet/contention results and limitations.
+Set `KE_CORPUS_BUDGET_MODE=wall` for the three-second negative control;
+`nodes` retains strict requested-depth admission as a diagnostic.
+`KE_CORPUS_DEPTH` and `KE_CORPUS_NODE_LIMIT` permit explicit experiments; changing
+the engine artifacts, depth, cap, threads or hash requires requalification.
 
 See [npm publishing](NPM-PUBLISHING.md) for release preparation.
 
