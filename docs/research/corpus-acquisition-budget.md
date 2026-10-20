@@ -5,7 +5,7 @@ classifier policy or a new release artifact. Existing expected labels, witnesses
 continuation/comparison admission, fixture order and the default three-second
 wall-clock budget are unchanged.
 
-## Frozen experiment procedure
+## Initial experiment procedure (superseded after censored control)
 
 1. Pin the JS and WASM engine artifacts by SHA-256. Use Full Stockfish 19,
    one thread, 16 MiB hash and depth 15. Clear hash for each fixture and keep the
@@ -60,7 +60,8 @@ The complete depth-15 control was attempted serially on the cloud executor
 in fixture 14 at its 30-second watchdog after 630 completed searches. All
 completed searches reached requested depth; the largest completed search used
 4,515,685 nodes and the slowest completed search took 13,455 ms. This is an
-incomplete control, not a passing full oracle or a calibrated node cap.
+incomplete, censored control, not a passing full oracle or a calibrated node cap.
+The largest completed node count is only a lower bound on required work.
 
 A targeted fresh-process replay of fixture 14, preserving its order and hash
 clearing, completed all 30 searches and passed its unchanged expected labels.
@@ -75,3 +76,31 @@ comparison. Increasing the watchdog or changing expectations is not an automatic
 response to this result. The opt-in node profile rejects under-depth evidence
 as a failed search, retaining diagnostic scores/PVs but never passing them to
 the classifier. The default wall-time profile retains existing admission behavior.
+
+## Revised bounded study after review
+
+The depth-only result does not justify adoption. Requiring all main searches to
+reach depth 15 is stricter than the shipped admission rules. The original strict
+`nodes` arm remains available as a diagnostic; the new `nodes-admit` arm passes
+reached-depth evidence through the unchanged policy, including its existing
+verification, continuation and comparison depth gates.
+
+Freeze three experimental caps **1,000,000, 2,000,000 and 4,000,000 nodes** before
+running or inspecting their labels. Each fixture gets a new engine process,
+with the same settings, hash clear, FEN cache and search order. A failed fixture
+is recorded and the next fixture uses a fresh engine. No failed search evidence
+is admitted. Keep the 30-second watchdog and one-second stop grace unchanged.
+
+For each cap compare quiet versus declared CPU contention, normalized search
+transcripts and the complete unchanged oracle. Also run the wall-time profile
+under both conditions as a negative control. Record CPU affinity and contention
+process count/load with the receipts; a control with no effective contention
+cannot establish load independence. Report all under-depth searches, restricted
+gate usage and main-position consumption by actual or expected special decisions.
+Consumption marks are conservative dependencies, not proof that an under-depth
+search caused a label change. Diverging decisions can also change subsequent
+search requests; compare the ordered search identities as well as transcripts.
+
+Raw receipts contain owner-game names, FENs and PVs: **keep them local; do not
+commit them or paste them into issues**. Only sanitized aggregate findings and
+artifact hashes belong in review documents. No cap is an adopted product budget.

@@ -31,13 +31,14 @@ for(const responsive of [true,false]) test(`watchdog rejects late evidence and d
   await assert.rejects(engine.analyze('synthetic',15),/watchdog expired/);
   await assert.rejects(engine.analyze('synthetic',15),/watchdog expired/);
   const [code,signal]=await exited;
+  await assert.rejects(engine.analyze('synthetic',15),/watchdog expired/);
   if(!responsive) assert.equal(signal,'SIGKILL');else assert.equal(code,0);
   assert.equal(engine.searches.length,1);assert.equal(engine.searches[0].failed,true);
   assert.equal(engine.searches[0].candidates,undefined,'partial or late results must never be admitted');
  }finally{engine?.close();await rm(dir,{recursive:true,force:true});}
 });
 
-test('search receipts retain cumulative nodes, scores, PVs and under-depth status',async()=>{
+for (const mode of ['nodes','nodes-admit']) test(`search receipts retain cumulative nodes and ${mode} admission`,async()=>{
  const dir=await mkdtemp(join(tmpdir(),'ke-corpus-receipt-'));let engine;
  try {
   const entry=join(dir,'engine.cjs');
@@ -46,9 +47,10 @@ test('search receipts retain cumulative nodes, scores, PVs and under-depth statu
    if(line.startsWith('go '))console.log('info depth 9 multipv 1 score cp 20 nodes 90 time 15 nps 6000 hashfull 1 pv e2e4 e7e5\\ninfo depth 10 multipv 1 score cp 21 nodes 110 time 20 nps 5500 hashfull 2 pv e2e4 e7e5\\nbestmove e2e4');
    if(line==='quit')process.exit(0);
   });`);
-  engine=new Stockfish(entry,{...base,mode:'nodes',nodeLimit:100});await engine.init();
-  await assert.rejects(engine.analyze('synthetic',15,['e2e4'],true),/evidence not admitted/);
-  const receipt=engine.searches[0];assert.equal(receipt.achievedDepth,10);assert.equal(receipt.candidates[0].scoreCp,21);assert.equal(receipt.failed,true);assert.equal(receipt.nodes,110);assert.equal(receipt.capLimited,true);
+  engine=new Stockfish(entry,{...base,mode,nodeLimit:100});await engine.init();
+  if(mode==='nodes') await assert.rejects(engine.analyze('synthetic',15,['e2e4'],true),/evidence not admitted/);
+  else {const result=await engine.analyze('synthetic',15,['e2e4'],true);assert.equal(result.depth,10);assert.equal(engine.failure,null);}
+  const receipt=engine.searches[0];assert.equal(receipt.achievedDepth,10);assert.equal(receipt.candidates[0].scoreCp,21);assert.equal(!!receipt.failed,mode==='nodes');assert.equal(receipt.nodes,110);assert.equal(receipt.capLimited,true);
   assert.equal(receipt.restricted,true);assert.deepEqual(receipt.roots,['e2e4']);
   assert.equal(receipt.command,'go depth 15 nodes 100 searchmoves e2e4');
   assert.ok(receipt.transcript.every(line=>!/(time|nps|hashfull) /.test(line)));

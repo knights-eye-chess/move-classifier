@@ -19,8 +19,8 @@ export class Stockfish {
     this.process.stdin.on('error', error => this.fail(error));
   }
   fail(error) {
-    this.failure = error;
-    for (const waiter of this.waiters.splice(0)) { clearTimeout(waiter.timer); error.lines = [...waiter.lines]; waiter.reject(error); }
+    this.failure ??= error;
+    for (const waiter of this.waiters.splice(0)) { clearTimeout(waiter.timer); waiter.reject(this.failure); }
   }
   receive(line) {
     if (this.failure && line.startsWith('bestmove ')) { this.send('quit'); return; }
@@ -34,10 +34,10 @@ export class Stockfish {
     }
   }
   send(command) { if (this.process.exitCode === null && !this.process.killed) this.process.stdin.write(`${command}\n`); }
-  wait(accept) {
+  wait(accept, lines = []) {
     return new Promise((resolve, reject) => {
       if (this.failure) { reject(this.failure); return; }
-      const waiter = { accept, resolve, reject, lines: [], timer: null };
+      const waiter = { accept, resolve, reject, lines, timer: null };
       waiter.timer = setTimeout(() => {
         this.send('stop');
         this.fail(new Error('Stockfish watchdog expired; engine discarded'));
@@ -67,10 +67,11 @@ export class Stockfish {
     this.send(`position fen ${fen}`);
     const command = searchCommand(requestedDepth, roots, restricted, this.budget);
     this.send(command);
-    const received = await this.wait(line => line.startsWith('bestmove ')).catch(error => {
+    const searchLines = [];
+    const received = await this.wait(line => line.startsWith('bestmove '), searchLines).catch(error => {
       this.searches.push({fixture:this.fixtureName,failed:true,reason:error.message,restricted,requestedDepth,elapsedMs:Math.round(performance.now()-started),fen,roots,command,
-        nodes:Math.max(0,...(error.lines || []).map(line=>Number(/\bnodes (\d+)/.exec(line)?.[1] || 0))),
-        transcript:(error.lines || []).map(line=>line.replace(/\b(?:time|nps|hashfull) \d+\s*/g,'').trim())});
+        nodes:Math.max(0,...searchLines.map(line=>Number(/\bnodes (\d+)/.exec(line)?.[1] || 0))),
+        transcript:searchLines.map(line=>line.replace(/\b(?:time|nps|hashfull) \d+\s*/g,'').trim())});
       throw new Error(`Stockfish search failed for ${command}, FEN ${fen}, roots ${roots.join(' ')}: ${error.message}`, { cause: error });
     });
     const found = new Map();
@@ -90,7 +91,7 @@ export class Stockfish {
     this.searches.push({ fixture:this.fixtureName, restricted, requestedDepth, achievedDepth, elapsedMs: Math.round(performance.now() - started),
       rootCount: roots.length, roots, fen, command,
       nodes: Math.max(0,...received.lines.map(line=>Number(/\bnodes (\d+)/.exec(line)?.[1] || 0))),
-      capLimited: this.budget.mode === 'nodes' && achievedDepth < requestedDepth,
+      capLimited: this.budget.mode.startsWith('nodes') && achievedDepth < requestedDepth,
       bestmove:received.line.split(/\s+/)[1], candidates,
       transcript:received.lines.map(line=>line.replace(/\b(?:time|nps|hashfull) \d+\s*/g,'').trim()) });
     if (this.budget.mode === 'nodes' && achievedDepth < requestedDepth) {
@@ -106,7 +107,7 @@ export class Stockfish {
 
 
 export function searchCommand(depth, roots, restricted, budget) {
-  assert.ok(['wall','depth','nodes'].includes(budget.mode), 'Unknown corpus budget mode');
+  assert.ok(['wall','depth','nodes','nodes-admit'].includes(budget.mode), 'Unknown corpus budget mode');
   assert.ok(Number.isSafeInteger(depth) && depth > 0, 'Invalid search depth');
   let limit='';
   if (budget.mode==='wall') {
@@ -114,7 +115,7 @@ export function searchCommand(depth, roots, restricted, budget) {
     assert.ok(Number.isSafeInteger(time) && time>0,'Invalid movetime');
     limit=` movetime ${time}`;
   }
-  if (budget.mode==='nodes') {
+  if (budget.mode.startsWith('nodes')) {
     assert.ok(Number.isSafeInteger(budget.nodeLimit) && budget.nodeLimit>0,'Invalid fixed node limit');
     limit=` nodes ${budget.nodeLimit}`;
   }

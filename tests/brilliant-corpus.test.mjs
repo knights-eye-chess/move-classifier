@@ -61,6 +61,7 @@ async function classifyFixture(fixture, engine, cache) {
     if (state.candidates.length) {
       const roots = state.candidates.map(candidate => candidate.uci);
       const verified = await engine.analyze(afterFen, 10, roots, true);
+      engine.searches.at(-1).gate = 'verification';
       let proof = verified.depth >= 10 ? policy.verify(context, state, verified.candidates) : null;
       if (proof) {
         const scopes = policy.continuationRequests(context, state, proof);
@@ -70,6 +71,7 @@ async function classifyFixture(fixture, engine, cache) {
           continuationRoots += request.rootMoves.length;
           const started = performance.now();
           const analysis = await engine.analyze(request.fen, request.depth, request.rootMoves, true);
+          engine.searches.at(-1).gate = 'continuation';
           continuationMs += performance.now() - started;
           evidence.push({ request, analysis });
         }
@@ -82,6 +84,7 @@ async function classifyFixture(fixture, engine, cache) {
       brilliantPairSearches++;
       const started = performance.now();
       const comparison = await engine.analyze(pairRequest.fen, pairRequest.depth, pairRequest.rootMoves, true);
+      engine.searches.at(-1).gate = 'comparison';
       brilliantPairMs += performance.now() - started;
       if (comparison.depth >= pairRequest.depth) {
         const admitted = policy.admitClassificationComparison(context, pairRequest, comparison);
@@ -89,6 +92,14 @@ async function classifyFixture(fixture, engine, cache) {
       }
     }
     const decision = policy.classify(context);
+    const keyForUse = `${index + 1}:${move.san}`;
+    const expectedSpecial = [...(fixture.expected || []), ...(fixture.expectedInteresting || []),
+      ...(fixture.optionalBrilliant || []), ...(fixture.optionalInteresting || []),
+      ...(fixture.expectedSpecialVariants || []).flatMap(v => [...(v.brilliant || []), ...(v.interesting || [])])].includes(keyForUse);
+    for (const receipt of engine.searches) {
+      if (![beforeFen, afterFen, context.priorFen, context.priorOwnBeforeFen].includes(receipt.fen)) continue;
+      (receipt.policyUses ||= []).push({move:keyForUse,label:decision.classification,expectedSpecial});
+    }
     const key = `${index + 1}:${move.san}`;
     if (sets[decision.classification]) sets[decision.classification].push(key);
     if (decision.sacrifice || state.candidates.length) {
@@ -115,54 +126,62 @@ async function classifyFixture(fixture, engine, cache) {
 
 const fixtures = [...fixtureData.fixtures, ...fixtureData.interestingFixtures, ...fixtureData.addedFixtures, fixtureData.nc5SingleMoveFixture];
 test('KE-AN-009: real policy reproduces complete reviewed Brilliant and Interesting sets', { skip: !enginePath, timeout: 3600000 }, async () => {
-  const engine = new Stockfish(enginePath, engineBudget), differences = [], fixtureResults = [];
+  const differences = [], fixtureResults = [], searches = [];
+  let engineName;
   console.log(`[engine budget] ${JSON.stringify({ requestedDepth: depth, ...engineBudget })}`);
   const startIndex = Number(process.env.KE_CORPUS_START || 1);
   const endIndex = Number(process.env.KE_CORPUS_END || fixtures.length);
   const selected = fixtures.filter((fixture, index) => index + 1 >= startIndex && index + 1 <= endIndex &&
     (!process.env.KE_CORPUS_FIXTURE || fixture.name.includes(process.env.KE_CORPUS_FIXTURE)));
   assert.ok(selected.length, 'No corpus fixtures matched the selected range or KE_CORPUS_FIXTURE');
-  await engine.init();
-  console.log(`[engine identity] ${engine.engineName}`);
   try {
     for (const [index, fixture] of selected.entries()) {
       console.log(`[real policy ${index + 1}/${selected.length}] ${fixture.name}`);
       // Independent corpus PGNs must not inherit results or hash state from
       // fixture order. The browser can reuse a warm engine session across jobs;
       // this isolated profile controls that source of test variation.
+      const engine = new Stockfish(enginePath, engineBudget);
       engine.fixtureName = fixture.name;
-      await engine.newGame();
-      const result = await classifyFixture(fixture, engine, new Map());
-      console.log(`[fixture labels] ${JSON.stringify({ fixture: fixture.name, sets: result.sets, diagnostics: result.diagnostics })}`);
-      if (result.continuationSearches) console.log(`[continuations] ${fixture.name}: ${result.continuationSearches} searches, ${result.continuationRoots} roots, ${Math.round(result.continuationMs)} ms`);
-      if (result.brilliantPairSearches) console.log(`[brilliant pairs] ${fixture.name}: ${result.brilliantPairSearches} searches, ${Math.round(result.brilliantPairMs)} ms`);
-      const variants = fixture.expectedSpecialVariants || [{ brilliant: fixture.expected || [], interesting: fixture.expectedInteresting || [] }];
-      const actual = { brilliant: result.sets.brilliant, interesting: result.sets.interesting };
-      fixtureResults.push({fixture:fixture.name,actual});
-      const compare = fixture.brilliantOnly || fixture.name.startsWith('Owner game ') || fixture.name.startsWith('Either-way ')
-        ? value => ({ brilliant: value.brilliant }) : value => value;
-      const allowedOptional = fixture.optionalBrilliant || [];
-      const allowedInteresting = fixture.optionalInteresting || [];
-      const matchesVariant = variant => {
-        const required = compare(variant), observed = compare(actual);
-        const allowed = new Set([...(required.brilliant || []), ...allowedOptional]);
-        const interesting = new Set([...(required.interesting || []), ...allowedInteresting]);
-        return (required.brilliant || []).every(key => observed.brilliant.includes(key)) &&
-          observed.brilliant.every(key => allowed.has(key)) &&
-          (required.interesting === undefined ||
-            ((required.interesting || []).every(key => observed.interesting.includes(key)) &&
-              observed.interesting.every(key => interesting.has(key))));
-      };
-      if (!variants.some(matchesVariant)) differences.push({ fixture: fixture.name, expected: variants, optionalBrilliant: allowedOptional, actual, diagnostics: result.diagnostics });
-      for (const forbidden of fixture.forbiddenBrilliant || []) if (actual.brilliant.includes(forbidden)) differences.push({ fixture: fixture.name, forbidden, actual });
+      try {
+        await engine.init();
+        engineName = engine.engineName;
+        await engine.newGame();
+        const result = await classifyFixture(fixture, engine, new Map());
+        console.log(`[fixture labels] ${JSON.stringify({ fixture: fixture.name, sets: result.sets, diagnostics: result.diagnostics })}`);
+        if (result.continuationSearches) console.log(`[continuations] ${fixture.name}: ${result.continuationSearches} searches, ${result.continuationRoots} roots, ${Math.round(result.continuationMs)} ms`);
+        if (result.brilliantPairSearches) console.log(`[brilliant pairs] ${fixture.name}: ${result.brilliantPairSearches} searches, ${Math.round(result.brilliantPairMs)} ms`);
+        const variants = fixture.expectedSpecialVariants || [{ brilliant: fixture.expected || [], interesting: fixture.expectedInteresting || [] }];
+        const actual = { brilliant: result.sets.brilliant, interesting: result.sets.interesting };
+        fixtureResults.push({fixture:fixture.name,actual});
+        const compare = fixture.brilliantOnly || fixture.name.startsWith('Owner game ') || fixture.name.startsWith('Either-way ')
+          ? value => ({ brilliant: value.brilliant }) : value => value;
+        const allowedOptional = fixture.optionalBrilliant || [];
+        const allowedInteresting = fixture.optionalInteresting || [];
+        const matchesVariant = variant => {
+          const required = compare(variant), observed = compare(actual);
+          const allowed = new Set([...(required.brilliant || []), ...allowedOptional]);
+          const interesting = new Set([...(required.interesting || []), ...allowedInteresting]);
+          return (required.brilliant || []).every(key => observed.brilliant.includes(key)) &&
+            observed.brilliant.every(key => allowed.has(key)) &&
+            (required.interesting === undefined ||
+              ((required.interesting || []).every(key => observed.interesting.includes(key)) &&
+                observed.interesting.every(key => interesting.has(key))));
+        };
+        if (!variants.some(matchesVariant)) differences.push({ fixture: fixture.name, expected: variants, optionalBrilliant: allowedOptional, actual, diagnostics: result.diagnostics });
+        for (const forbidden of fixture.forbiddenBrilliant || []) if (actual.brilliant.includes(forbidden)) differences.push({ fixture: fixture.name, forbidden, actual });
+      } catch (error) {
+        const failure = {fixture:fixture.name,failed:true,reason:error.message};
+        fixtureResults.push(failure); differences.push(failure);
+      } finally {
+        searches.push(...engine.searches); engine.close();
+      }
     }
     assert.deepEqual(differences, []);
   } finally {
-    const underDepth = engine.searches.filter(search => search.achievedDepth < search.requestedDepth);
-    console.log(`[engine searches] ${JSON.stringify({ total: engine.searches.length, restricted: engine.searches.filter(search => search.restricted).length,
-      underDepth: underDepth.length, failed:engine.searches.filter(search=>search.failed).length, slowestMs: Math.max(0, ...engine.searches.map(search => search.elapsedMs)),
-      slowestFen: engine.searches.toSorted((a, b) => b.elapsedMs - a.elapsedMs)[0]?.fen || '' })}`);
-    if (process.env.KE_CORPUS_SEARCH_RECORD) writeFileSync(process.env.KE_CORPUS_SEARCH_RECORD, JSON.stringify({engineName:engine.engineName,budget:engineBudget,fixtureResults,differences,searches:engine.searches},null,2));
-    engine.close();
+    const underDepth = searches.filter(search => search.achievedDepth < search.requestedDepth);
+    console.log(`[engine searches] ${JSON.stringify({ total: searches.length, restricted: searches.filter(search => search.restricted).length,
+      underDepth: underDepth.length, failed:searches.filter(search=>search.failed).length, slowestMs: Math.max(0, ...searches.map(search => search.elapsedMs)),
+      slowestFen: searches.toSorted((a, b) => b.elapsedMs - a.elapsedMs)[0]?.fen || '' })}`);
+    if (process.env.KE_CORPUS_SEARCH_RECORD) writeFileSync(process.env.KE_CORPUS_SEARCH_RECORD, JSON.stringify({engineName,budget:engineBudget,fixtureResults,differences,searches},null,2));
   }
 });
