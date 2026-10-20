@@ -23,6 +23,7 @@ the final selection and its limits are recorded after the complete study table.
    classification outcomes. It is a measured compute envelope, not a parameter
    to tune until labels match. If the control times out, stop and investigate;
    do not silently increase its deadline or admit partial evidence.
+   This superseded rule was not used for adoption; see [Selection and scope](#selection-and-scope).
 4. Run `KE_CORPUS_BUDGET_MODE=nodes` with that fixed `KE_CORPUS_NODE_LIMIT` in
    an otherwise quiet execution and under declared CPU contention. Keep the
    independent watchdog unchanged. Record under-depth node-limited searches;
