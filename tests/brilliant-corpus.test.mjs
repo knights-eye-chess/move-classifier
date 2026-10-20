@@ -11,8 +11,9 @@ import { createKnightsEyePolicy } from '@knights-eye-chess/move-classifier/polic
 const enginePath = process.env.KE_CORPUS_ENGINE;
 const depth = Number(process.env.KE_CORPUS_DEPTH || 15);
 const fixtureData = JSON.parse(readFileSync(new URL('./fixtures/brilliant-corpus.json', import.meta.url)));
-const engineBudget = { ...fixtureData.engineBudget, mode: process.env.KE_CORPUS_BUDGET_MODE || 'wall',
-  nodeLimit: process.env.KE_CORPUS_NODE_LIMIT ? Number(process.env.KE_CORPUS_NODE_LIMIT) : undefined };
+// Qualified configuration and artifact hashes: docs/research/corpus-acquisition-budget.md.
+const engineBudget = { ...fixtureData.engineBudget, mode: process.env.KE_CORPUS_BUDGET_MODE || 'nodes-admit',
+  nodeLimit: process.env.KE_CORPUS_NODE_LIMIT ? Number(process.env.KE_CORPUS_NODE_LIMIT) : 2000000 };
 
 
 
