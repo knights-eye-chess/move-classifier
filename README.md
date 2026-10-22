@@ -143,6 +143,23 @@ prepared hosts use `brilliantComparison` at the same stage.
 The remaining PV material-path calculation belongs only to the legacy
 Interesting tier; it is not part of the Brilliant proof.
 
+## Classification policy 48
+
+Non-sacrifice Great moves must retain the existing near-best, outcome, routine,
+evasion and normalized uniqueness gates. They additionally need a 0.05 expected-
+points swing from the preceding position or a 0.20 uniqueness gap. Quiet moves
+(without a capture or check) may instead qualify by preserving a holding outcome
+(best at least 0.50, second below 0.45) or decisive conversion (best at least 0.80,
+second below 0.72). The same rules evaluate a missed best alternative using that
+alternative's own move characteristics. Missing history supplies no swing credit.
+
+Qualification diagnostics record every matching reason and signed distances to
+the thresholds, from unrestricted root evidence. Restricted comparisons cannot
+create these reasons. Existing Brilliant and Interesting rules are unchanged.
+Saved policy-47 labels require reclassification; recorded decisions are never
+engine proof. Thresholds remain sensitive to ordinary engine score changes near
+a boundary; this revision adds no hysteresis.
+
 ## Acknowledgements
 
 The unsafe-piece, trapped-piece and rescue ideas are adapted from the prose

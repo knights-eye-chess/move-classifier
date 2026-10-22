@@ -46,7 +46,14 @@ export type MaterialOpportunity = {
   legalRecaptureCount: number; minimumGain: number; inheritedExchange: boolean;
   routineRecapture: boolean; poisonedCapture: boolean; reason: string;
 };
+/** Unrestricted-root reasons, independent of later restricted quality checks. */
+export type GreatQualification = {
+  reasons: Array<'significant-swing' | 'strong-uniqueness' | 'quiet-holding' | 'decisive-conversion'>;
+  rootBestEp: number; rootSecondEp: number; priorEp: number;
+  distances: Record<'uniqueness' | 'swing' | 'strongUniqueness' | 'holdingBest' | 'holdingSecond' | 'conversionBest' | 'conversionSecond', number>;
+};
 export type BestMoveSpecial = {
+  greatQualification?: GreatQualification;
   qualifies: boolean; uci: string; san: string; evasion: boolean; reason?: string;
   baseRoutine?: boolean; routine?: boolean; routineOverride?: boolean; pawnBreakthrough?: boolean;
   tacticalConversion?: boolean; uniqueGap?: number; sacrifice?: boolean; forcesMate?: boolean;
@@ -81,6 +88,7 @@ export type KnightsEyeDecision = ClassificationDecision & {
   sacrificeVerification: SacrificeVerification | null;
   candidates: PreparedEngineLine[]; second: PreparedEngineLine | undefined; secondEp: number; alternativeEp: number; playedMateOnly: boolean; secondUtility: number;
   uniqueGap: number; priorEp: number; matingLine: boolean;
+  priorEpAvailable: boolean; greatQualification: GreatQualification;
   mateLossClassification: '' | 'miss' | 'mistake' | 'blunder'; bestSpecial: BestMoveSpecial;
   bestMaterialOpportunity: MaterialOpportunity;
   missedOpportunityDiagnostic: (MaterialOpportunity & { outcomeLoss: number }) | null;
